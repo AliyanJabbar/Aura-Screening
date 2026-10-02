@@ -404,7 +404,7 @@ function ProfileContent() {
             <div className="flex items-center gap-3">
               <Link
                 href="/screening"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#141413] text-white hover:bg-[#252320] text-xs font-medium transition-all shadow-xs"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-aura-primary text-white hover:bg-aura-primary/80  text-xs font-medium transition-all shadow-xs"
               >
                 <FileCheck2 size={15} />
                 <span>Launch Screening Engine</span>
@@ -502,7 +502,7 @@ function ProfileContent() {
                   <button
                     onClick={() => handleUpgradeCheckout(isPro ? "pro-max" : "pro")}
                     disabled={isUpgrading}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#141413] hover:bg-[#252320] text-white font-medium text-xs transition-all shadow-xs"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-aura-secondary hover:bg-aura-primary  text-black font-medium text-xs transition-all shadow-xs"
                   >
                     {isUpgrading ? (
                       <Loader2 size={14} className="animate-spin" />
@@ -609,17 +609,17 @@ function ProfileContent() {
 
             {/* Need More Runs Banner */}
             {!isProMax ? (
-              <div className="p-5 rounded-2xl bg-[#141413] text-white space-y-3">
-                <div className="flex items-center gap-2 text-[#cc785c] text-xs font-mono uppercase font-semibold">
+              <div className="p-5 rounded-2xl bg-primary text-white space-y-3">
+                <div className="flex items-center gap-2 text-white text-xs font-mono uppercase font-semibold">
                   <Sparkles size={14} />
                   <span>Need More Runs?</span>
                 </div>
-                <p className="text-xs text-[#a09d96] leading-relaxed">
+                <p className="text-xs text-white/90 leading-relaxed">
                   Upgrade instantly via Stripe to unlock up to 1,000 CV screening runs and priority batch processing.
                 </p>
                 <Link
                   href="/#pricing"
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-white hover:text-[#cc785c] transition-colors"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-white hover:underline transition-colors"
                 >
                   <span>Compare All Plans</span>
                   <ChevronRight size={14} />

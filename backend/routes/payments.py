@@ -187,40 +187,46 @@ async def create_checkout_session(
         )
 
 
+def stripe_to_dict(obj) -> dict:
+    """
+    Safely converts a StripeObject or dict-like object to a standard Python dictionary.
+    In stripe-python >= 8.0, StripeObject is no longer an iterable or mapping, so
+    standard dict(obj) raises TypeError. obj.to_dict() must be used instead.
+    """
+    if obj is None:
+        return {}
+    if hasattr(obj, "to_dict"):
+        return obj.to_dict()
+    if isinstance(obj, dict):
+        return obj
+    try:
+        return dict(obj)
+    except Exception:
+        return getattr(obj, "__dict__", {})
+
+
 def sync_subscription_from_stripe_session(session_obj) -> Optional[Subscription]:
     """
     Safely synchronizes or provisions a user's subscription record in PostgreSQL
     given a verified Stripe Checkout Session object or event payload.
     """
-    client_ref = getattr(session_obj, "client_reference_id", None) or (
-        session_obj.get("client_reference_id") if isinstance(session_obj, dict) else None
-    )
-    metadata = getattr(session_obj, "metadata", None) or (
-        session_obj.get("metadata") if isinstance(session_obj, dict) else {}
-    )
-    metadata_dict = dict(metadata) if metadata else {}
+    s_dict = stripe_to_dict(session_obj)
+
+    client_ref = getattr(session_obj, "client_reference_id", None) or s_dict.get("client_reference_id")
+    metadata = getattr(session_obj, "metadata", None) or s_dict.get("metadata")
+    metadata_dict = stripe_to_dict(metadata)
     user_id = client_ref or metadata_dict.get("user_id")
 
     if not user_id or user_id == "anonymous_guest":
         return None
 
-    customer_id = getattr(session_obj, "customer", None) or (
-        session_obj.get("customer") if isinstance(session_obj, dict) else None
-    )
-    subscription_id = getattr(session_obj, "subscription", None) or (
-        session_obj.get("subscription") if isinstance(session_obj, dict) else None
-    )
-    session_id = getattr(session_obj, "id", None) or (
-        session_obj.get("id") if isinstance(session_obj, dict) else None
-    )
+    customer_id = getattr(session_obj, "customer", None) or s_dict.get("customer")
+    subscription_id = getattr(session_obj, "subscription", None) or s_dict.get("subscription")
+    session_id = getattr(session_obj, "id", None) or s_dict.get("id")
     plan = metadata_dict.get("plan", "pro")
     interval = metadata_dict.get("interval", "month")
-    amount_total = getattr(session_obj, "amount_total", None) or (
-        session_obj.get("amount_total") if isinstance(session_obj, dict) else None
-    )
-    currency = getattr(session_obj, "currency", None) or (
-        session_obj.get("currency") if isinstance(session_obj, dict) else "usd"
-    )
+    amount_total = getattr(session_obj, "amount_total", None) or s_dict.get("amount_total")
+    currency = getattr(session_obj, "currency", None) or s_dict.get("currency", "usd")
 
     try:
         with Session(engine) as db_session:
@@ -280,15 +286,21 @@ async def get_session_status(session_id: str):
         session = stripe.checkout.Session.retrieve(session_id)
 
         # If payment is completed/paid, immediately synchronize subscription state
-        if session.status == "complete" or session.payment_status == "paid":
+        if getattr(session, "status", None) == "complete" or getattr(session, "payment_status", None) == "paid":
             sync_subscription_from_stripe_session(session)
 
+        customer_email = None
+        if hasattr(session, "customer_details") and session.customer_details:
+            customer_email = getattr(session.customer_details, "email", None)
+
+        metadata_dict = stripe_to_dict(getattr(session, "metadata", None))
+
         return {
-            "status": session.status,
-            "payment_status": session.payment_status,
-            "customer_email": session.customer_details.email if session.customer_details else None,
-            "client_reference_id": session.client_reference_id,
-            "metadata": session.metadata,
+            "status": getattr(session, "status", None),
+            "payment_status": getattr(session, "payment_status", None),
+            "customer_email": customer_email,
+            "client_reference_id": getattr(session, "client_reference_id", None),
+            "metadata": metadata_dict,
         }
     except Exception as e:
         logger.error(f"Error retrieving session status for {session_id}: {str(e)}")
@@ -624,13 +636,17 @@ async def create_portal_session(
 # ==============================================================================
 # 5. BACKGROUND TASK DATABASE PROVISIONING
 # ==============================================================================
-def process_webhook_event_sync(event: dict):
+def process_webhook_event_sync(event):
     """
     Background worker to securely update PostgreSQL subscription state
     without delaying the Stripe webhook HTTP response.
     """
-    event_type = event.get("type")
-    data_object = event.get("data", {}).get("object", {})
+    event_dict = stripe_to_dict(event)
+    event_type = event_dict.get("type") or getattr(event, "type", None)
+    data_payload = event_dict.get("data", {})
+    data_object = data_payload.get("object", {}) if isinstance(data_payload, dict) else {}
+    if not data_object and hasattr(event, "data"):
+        data_object = getattr(getattr(event, "data", None), "object", {})
 
     logger.info(f"Processing webhook event asynchronously: {event_type}")
 
