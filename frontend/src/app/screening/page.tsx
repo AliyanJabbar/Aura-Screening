@@ -17,7 +17,6 @@ import {
   Cpu,
   FileText,
   Copy,
-  Download,
   RefreshCw,
   Plus,
   X,
@@ -34,6 +33,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import JobTitleAutocomplete from "@/components/ui/job-title-autocomplete";
+import { JobTitleOption, JOB_TITLE_OPTIONS } from "@/lib/job-titles";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://aura-screening.fastapicloud.dev";
 
@@ -162,6 +163,18 @@ const JOB_PRESETS = [
     description: "Seeking a product-minded manager to lead feature development for our automated recruitment suite. Responsibilities include running user interviews, defining KPI benchmarks, and coordinating sprint execution.",
     customCriteria: "Experience in HR Tech or SaaS products is highly desirable.",
   },
+];
+
+// Sentences that rotate timely during candidate evaluation
+const EVALUATION_MESSAGES = [
+  "Evaluating candidate...",
+  "Checking against the job requirements...",
+  "Analyzing technical skills & core competencies...",
+  "Cross-referencing work experience and career trajectory...",
+  "Assessing seniority fit and leadership scope...",
+  "Checking for potential skill gaps and risk factors...",
+  "Generating targeted interview probe questions...",
+  "Synthesizing final executive screening report...",
 ];
 
 function ScreeningContent() {
@@ -363,6 +376,7 @@ function ScreeningContent() {
   // Resume State
   const [inputTab, setInputTab] = useState<"upload" | "link" | "sample">("upload");
   const [resumeText, setResumeText] = useState<string>("");
+  const [parsedCandidateName, setParsedCandidateName] = useState<string>("");
   const [resumeSource, setResumeSource] = useState<"file" | "link" | "sample">("file");
   const [resumeFileName, setResumeFileName] = useState<string>("");
   const [resumeUrlInput, setResumeUrlInput] = useState<string>("");
@@ -391,8 +405,20 @@ function ScreeningContent() {
 
   // Evaluation State
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
-  const [evaluationStage, setEvaluationStage] = useState<string>("");
+  const [evalMsgIndex, setEvalMsgIndex] = useState<number>(0);
   const [evalResult, setEvalResult] = useState<any>(null);
+
+  // Timely rotate evaluation sentences while evaluating
+  useEffect(() => {
+    if (!isEvaluating) {
+      setEvalMsgIndex(0);
+      return;
+    }
+    const timer = setInterval(() => {
+      setEvalMsgIndex((prev) => (prev + 1) % EVALUATION_MESSAGES.length);
+    }, 2200);
+    return () => clearInterval(timer);
+  }, [isEvaluating]);
 
   // --- Handlers: File Upload via FastAPI /extract-resume ---
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -417,19 +443,23 @@ function ScreeningContent() {
 
       setResumeText(data.raw_text);
       if (data.candidate_name && data.candidate_name !== "Candidate") {
-        toast.success(`Extracted resume for ${data.candidate_name}`);
+        setParsedCandidateName(data.candidate_name);
+        toast.success(`Resume parsed successfully for ${data.candidate_name}`);
       } else {
-        toast.success(`Loaded file: ${file.name}`);
+        setParsedCandidateName("");
+        toast.success(`Resume parsed successfully: ${file.name}`);
       }
     } catch (err: any) {
       // Client-side fallback read if backend is starting up
       const reader = new FileReader();
       reader.onload = (ev) => {
         const text = ev.target?.result as string;
-        if (text) setResumeText(text);
+        if (text) {
+          setResumeText(text);
+          toast.success("Resume parsed successfully!");
+        }
       };
       reader.readAsText(file);
-      toast.warning("Extracted file locally");
     }
   };
 
@@ -455,7 +485,10 @@ function ScreeningContent() {
 
       setResumeText(data.raw_text);
       setResumeSource("link");
-      toast.success("Successfully extracted resume text.");
+      if (data.candidate_name && data.candidate_name !== "Candidate") {
+        setParsedCandidateName(data.candidate_name);
+      }
+      toast.success("Resume parsed successfully!");
     } catch (err: any) {
       toast.error(err.message || "Failed to fetch resume link!");
     } finally {
@@ -468,7 +501,8 @@ function ScreeningContent() {
     setResumeText(sample.text);
     setResumeSource("sample");
     setResumeFileName(`${sample.name} - CV`);
-    toast.success(`Loaded sample candidate: ${sample.name}`);
+    setParsedCandidateName(sample.name);
+    toast.success(`Resume loaded: ${sample.name}`);
   };
 
   // --- Handlers: Preset Pick ---
@@ -481,6 +515,28 @@ function ScreeningContent() {
     setJobDescription(preset.description);
     setCustomCriteria(preset.customCriteria);
     toast.success(`Applied job criteria preset for ${preset.title}. Save or proceed to add to dashboard.`);
+  };
+
+  // --- Handlers: Autocomplete Job Option Pick ---
+  const handleSelectJobTitleOption = (option: JobTitleOption) => {
+    setSelectedJobId(null);
+    setJobTitle(option.title);
+    if (option.suggestedSeniority) {
+      setSeniority(option.suggestedSeniority);
+    }
+    if (option.suggestedMinExp !== undefined) {
+      setMinExpYears(option.suggestedMinExp);
+    }
+    if (option.suggestedSkills && option.suggestedSkills.length > 0) {
+      setRequiredSkills([...option.suggestedSkills]);
+    }
+    if (option.descriptionTemplate) {
+      setJobDescription(option.descriptionTemplate);
+    }
+    if (option.customCriteriaTemplate) {
+      setCustomCriteria(option.customCriteriaTemplate);
+    }
+    toast.success(`Loaded criteria & recommended skills for ${option.title}`);
   };
 
   // --- Handlers: Skill Tags ---
@@ -514,19 +570,7 @@ function ScreeningContent() {
     setCurrentStep(3);
     setIsEvaluating(true);
     setEvalResult(null);
-
-    const stages = [
-      "Connecting to FastAPI Autonomous Screening Engine...",
-      "Extracting skills, timeline & work experience matrix...",
-      "Cross-referencing candidate against required job competencies...",
-      "Evaluating multi-factor rubric scores & risk indicators...",
-      "Synthesizing final executive screening report...",
-    ];
-
-    for (let i = 0; i < stages.length; i++) {
-      setEvaluationStage(stages[i]);
-      await new Promise((resolve) => setTimeout(resolve, 350));
-    }
+    setEvalMsgIndex(0);
 
     try {
       // Ensure job is saved to dashboard so candidate evaluation attaches to it
@@ -546,7 +590,7 @@ function ScreeningContent() {
           min_experience_years: minExpYears,
           job_description: jobDescription,
           custom_criteria: customCriteria,
-          candidate_name: resumeSource === "sample" ? SAMPLE_RESUMES.find(s => s.text === resumeText)?.name : undefined,
+          candidate_name: parsedCandidateName || (resumeSource === "sample" ? SAMPLE_RESUMES.find(s => s.text === resumeText)?.name : undefined),
           job_id: effectiveJobId || undefined,
           user_id: user?.id || undefined,
         }),
@@ -581,19 +625,6 @@ function ScreeningContent() {
     const summary = `Candidate: ${evalResult.candidateName}\nScore: ${evalResult.matchScore}/100 (${evalResult.fitRating})\nVerdict: ${evalResult.verdict}\n\nKey Strengths:\n${evalResult.strengths?.join("\n")}\n\nGaps:\n${evalResult.missingElements?.join("\n")}`;
     navigator.clipboard.writeText(summary);
     toast.success("Summary copied to clipboard!");
-  };
-
-  // Export JSON Report
-  const handleDownloadJSON = () => {
-    if (!evalResult) return;
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(evalResult, null, 2));
-    const downloadAnchor = document.createElement("a");
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `Screening_${evalResult.candidateName.replace(/\s+/g, "_")}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-    toast.success("Report downloaded successfully.");
   };
 
   return (
@@ -742,33 +773,6 @@ function ScreeningContent() {
                     <Plus size={12} className="text-[#cc785c]" />
                     <span>+ New Job</span>
                   </button>
-
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-mono text-[#6c6a64]">Presets:</span>
-                    <div className="flex items-center gap-1.5">
-                      {JOB_PRESETS.map((preset) => (
-                        <button
-                          key={preset.title}
-                          type="button"
-                          onClick={() => handleApplyPreset(preset)}
-                          className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${jobTitle === preset.title
-                            ? "bg-[#cc785c] text-white border-[#cc785c]"
-                            : "bg-[#faf9f5] border-[#e6dfd8] text-[#3d3d3a] hover:bg-[#efe9de]"
-                            }`}
-                        >
-                          {preset.title.split(" ")[0]} {preset.title.split(" ")[1]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-lg bg-[#efe9de] hover:bg-[#e4ded3] text-[#3d3d3a] border border-[#e6dfd8] transition-all"
-                  >
-                    <LayoutDashboard size={12} />
-                    <span>Dashboard</span>
-                  </Link>
                 </div>
               </div>
 
@@ -782,12 +786,11 @@ function ScreeningContent() {
                       <label className="block text-xs font-semibold uppercase tracking-wider text-[#3d3d3a]">
                         Target Job Title
                       </label>
-                      <input
-                        type="text"
+                      <JobTitleAutocomplete
                         value={jobTitle}
-                        onChange={(e) => setJobTitle(e.target.value)}
-                        placeholder="e.g. Senior Full-Stack Engineer"
-                        className="w-full px-3.5 py-2 rounded-xl border border-[#e6dfd8] bg-[#efe9de]/30 text-xs text-[#141413] focus:outline-none focus:border-[#cc785c]"
+                        onChange={(val) => setJobTitle(val)}
+                        onSelectOption={handleSelectJobTitleOption}
+                        placeholder="e.g. Full Stack Engineer, Frontend Developer, AI Engineer, Marketing..."
                       />
                     </div>
 
@@ -800,10 +803,10 @@ function ScreeningContent() {
                         onChange={(e) => setSeniority(e.target.value)}
                         className="w-full px-3 py-2 rounded-xl border border-[#e6dfd8] bg-[#efe9de]/30 text-xs text-[#141413] focus:outline-none focus:border-[#cc785c]"
                       >
-                        <option value="Junior">Junior (0-2 yrs)</option>
-                        <option value="Mid">Mid-Level (2-5 yrs)</option>
-                        <option value="Senior">Senior (5-8 yrs)</option>
-                        <option value="Lead">Lead / Principal (8+ yrs)</option>
+                        <option value="Junior">Junior </option>
+                        <option value="Mid">Mid-Level </option>
+                        <option value="Senior">Senior </option>
+                        <option value="Lead">Lead / Principal</option>
                       </select>
                     </div>
                   </div>
@@ -1139,41 +1142,82 @@ function ScreeningContent() {
                 </div>
               )}
 
-              {/* Text Preview */}
+              {/* Resume Successfully Parsed Banner / Status Card */}
               {resumeText && (
-                <div className="border border-[#e6dfd8] rounded-2xl bg-[#faf9f5] p-5 space-y-3">
-                  <div className="flex items-center justify-between border-b border-[#e6dfd8] pb-3">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-[#141413]">
-                      <FileText size={15} className="text-[#cc785c]" />
-                      <span>Extracted Resume Text Preview</span>
-                      <span className="text-[10px] font-mono text-[#6c6a64] bg-[#efe9de] px-2 py-0.5 rounded-full">
-                        Source: {resumeSource.toUpperCase()} {resumeFileName && `(${resumeFileName})`}
-                      </span>
+                <div className="border border-[#b7e4c7] bg-[#f2fbf5] rounded-2xl p-6 sm:p-7 space-y-5 shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start sm:items-center gap-3.5">
+                      <div className="w-12 h-12 rounded-2xl bg-[#d8f3dc] border border-[#b7e4c7] text-[#2d6a4f] flex items-center justify-center shrink-0 shadow-xs">
+                        <CheckCircle2 size={24} className="text-[#2d6a4f]" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-base font-semibold text-[#141413]">
+                            Resume Parsed Successfully
+                          </h3>
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#2d6a4f] bg-[#d8f3dc] px-2.5 py-0.5 rounded-full font-semibold border border-[#b7e4c7]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#2d6a4f] animate-pulse" />
+                            Ready for Screening
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#52796f]">
+                          The candidate resume has been parsed and verified. You can now launch the autonomous screening against your job criteria.
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-[11px] font-mono text-[#6c6a64]">
-                      {resumeText.split(/\s+/).filter(Boolean).length} words • {resumeText.length} chars
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResumeText("");
+                        setResumeFileName("");
+                        setParsedCandidateName("");
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#d8f3dc] bg-white hover:bg-[#eaf7ee] text-xs font-medium text-[#2d6a4f] transition-all self-start sm:self-auto cursor-pointer shadow-xs"
+                    >
+                      <RefreshCw size={13} />
+                      <span>Change Resume</span>
+                    </button>
+                  </div>
+
+                  {/* Summary Meta Details */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                    <div className="bg-white/80 rounded-xl p-3 border border-[#b7e4c7]/60 space-y-1">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-[#52796f]">Candidate / Source</span>
+                      <p className="text-xs font-semibold text-[#141413] truncate">
+                        {parsedCandidateName || resumeFileName || (resumeSource === "link" ? "Web Link Document" : "Candidate Resume")}
+                      </p>
+                    </div>
+
+                    <div className="bg-white/80 rounded-xl p-3 border border-[#b7e4c7]/60 space-y-1">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-[#52796f]">Input Type</span>
+                      <p className="text-xs font-semibold text-[#141413] capitalize flex items-center gap-1.5">
+                        <FileText size={13} className="text-[#2d6a4f]" />
+                        <span>{resumeSource} Source</span>
+                      </p>
+                    </div>
+
+                    <div className="bg-white/80 rounded-xl p-3 border border-[#b7e4c7]/60 space-y-1">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-[#52796f]">Extraction Status</span>
+                      <p className="text-xs font-semibold text-[#2d6a4f] flex items-center gap-1.5">
+                        <CheckCircle2 size={13} />
+                        <span>Parsed & Structured</span>
+                      </p>
                     </div>
                   </div>
 
-                  <textarea
-                    value={resumeText}
-                    onChange={(e) => setResumeText(e.target.value)}
-                    rows={8}
-                    className="w-full p-3 rounded-xl border border-[#e6dfd8] bg-[#efe9de]/20 font-mono text-xs text-[#141413] focus:outline-none focus:border-[#cc785c] leading-relaxed"
-                    placeholder="Resume text content will appear here..."
-                  />
-
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#b7e4c7]/50">
                     <button
                       onClick={() => setCurrentStep(1)}
-                      className="px-4 py-2.5 rounded-xl border border-[#e6dfd8] text-xs font-medium text-[#3d3d3a] hover:bg-[#efe9de] transition-colors"
+                      className="px-4 py-2.5 rounded-xl border border-[#e6dfd8] bg-white text-xs font-medium text-[#3d3d3a] hover:bg-[#efe9de] transition-colors cursor-pointer"
                     >
                       ← Back to Job Details
                     </button>
 
                     <button
                       onClick={handleStartEvaluation}
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#cc785c] px-6 py-2.5 text-xs font-semibold text-white hover:bg-[#a9583e] shadow-md transition-all active:scale-95"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#cc785c] px-6 py-2.5 text-xs font-semibold text-white hover:bg-[#a9583e] shadow-md transition-all active:scale-95 cursor-pointer"
                     >
                       <Cpu size={15} />
                       <span>Start Evaluation & See Results</span>
@@ -1207,29 +1251,83 @@ function ScreeningContent() {
               className="space-y-6"
             >
               {isEvaluating && (
-                <div className="rounded-2xl bg-aura-secondary p-8 text-[#141413] border border-[#e6dfd8] shadow-2xl space-y-6 text-center">
-                  <div className="w-16 h-16 rounded-full bg-[#cc785c]/20 border-2 border-[#cc785c] text-[#cc785c] flex items-center justify-center mx-auto animate-spin">
-                    <Cpu size={32} />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-serif text-xl font-normal text-[#faf9f5]">
-                      FastAPI Screening Engine Executing...
-                    </h3>
-                    <p className="font-mono text-xs text-[#5db8a6] animate-pulse">
-                      {evaluationStage}
-                    </p>
+                <div className="rounded-3xl bg-aura-secondary p-8 sm:p-12 text-[#141413] border border-[#e6dfd8] shadow-xl space-y-8 text-center max-w-2xl mx-auto relative overflow-hidden">
+                  {/* Atmospheric Glow */}
+                  <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#cc785c]/10 rounded-full blur-3xl pointer-events-none" />
+                  <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-[#5db8a6]/10 rounded-full blur-3xl pointer-events-none" />
+
+                  {/* Center Animated Loader / Icon */}
+                  <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
+                    <div className="absolute inset-0 rounded-full border-2 border-dashed border-[#cc785c]/40 animate-spin" style={{ animationDuration: "10s" }} />
+                    <div className="absolute inset-2 rounded-full border border-[#5db8a6]/40 animate-pulse" />
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-[#e6dfd8] flex items-center justify-center text-[#cc785c] shadow-xs">
+                      <Sparkles size={26} className="animate-pulse text-[#cc785c]" />
+                    </div>
                   </div>
 
-                  <div className="max-w-md mx-auto bg-[#1f1e1b] rounded-xl p-4 font-mono text-[11px] text-[#a09d96] border border-[#252320] text-left space-y-1.5">
-                    <div className="text-[#faf9f5] font-semibold flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#5db8a6] animate-ping" />
-                      <span>FASTAPI ENDPOINT: {BACKEND_URL}/analyze-resume</span>
+                  {/* Title & Rotating Sentences */}
+                  <div className="space-y-3">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-[#e6dfd8] text-xs font-mono text-[#6c6a64] shadow-xs">
+                      <span className="w-2 h-2 rounded-full bg-[#cc785c] animate-ping" />
+                      <span>Screening for: <strong className="text-[#141413] font-semibold">{jobTitle || "Target Role"}</strong></span>
                     </div>
-                    <div>&gt; Candidate CV buffer length: {resumeText.length} chars...</div>
-                    <div>&gt; Target Profile: {jobTitle} ({seniority})</div>
-                    <div>&gt; Required Skills: [{requiredSkills.join(", ")}]</div>
-                    <div>&gt; Multi-factor rubric evaluation active...</div>
+
+                    <h3 className="font-serif text-2xl sm:text-3xl font-normal text-[#141413] tracking-tight">
+                      Evaluating Candidate Profile
+                    </h3>
+
+                    {/* Dynamic Rotating Message with Smooth Transition */}
+                    <div className="min-h-[44px] flex items-center justify-center px-4">
+                      <motion.div
+                        key={evalMsgIndex}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.35 }}
+                        className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-white border border-[#e6dfd8] text-xs sm:text-sm font-mono text-[#141413] font-medium shadow-xs"
+                      >
+                        <Loader2 size={15} className="animate-spin text-[#cc785c] shrink-0" />
+                        <span>{EVALUATION_MESSAGES[evalMsgIndex]}</span>
+                      </motion.div>
+                    </div>
                   </div>
+
+                  {/* Phase Tracker Cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 text-left">
+                    {EVALUATION_MESSAGES.slice(0, 4).map((msg, idx) => {
+                      const isPast = evalMsgIndex > idx;
+                      const isCurrent = evalMsgIndex === idx;
+                      return (
+                        <div
+                          key={msg}
+                          className={`p-3 rounded-xl border text-xs transition-all ${isCurrent
+                            ? "bg-white border-[#cc785c] text-[#141413] shadow-xs"
+                            : isPast
+                              ? "bg-[#efe9de] border-[#b7e4c7] text-[#2d6a4f]"
+                              : "bg-white/60 border-[#e6dfd8] text-[#6c6a64]"
+                            }`}
+                        >
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            {isPast ? (
+                              <CheckCircle2 size={12} className="text-[#2d6a4f]" />
+                            ) : isCurrent ? (
+                              <span className="w-2 h-2 rounded-full bg-[#cc785c] animate-pulse" />
+                            ) : (
+                              <span className="w-2 h-2 rounded-full bg-[#d0c9be]" />
+                            )}
+                            <span className="font-mono text-[10px] uppercase tracking-wider text-[#6c6a64]">Phase 0{idx + 1}</span>
+                          </div>
+                          <p className="line-clamp-2 text-[11px] font-medium leading-snug text-[#141413]">
+                            {msg.replace("...", "")}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <p className="text-[11px] text-[#6c6a64] font-mono">
+                    Autonomous evaluation in progress • Rotates automatically across screening criteria
+                  </p>
                 </div>
               )}
 
@@ -1261,17 +1359,17 @@ function ScreeningContent() {
                   </div>
 
                   {/* Top Score Banner */}
-                  <div className="rounded-2xl bg-aura-secondary p-6 sm:p-8 text-[#141413] border border-[#e6dfd8] shadow-2xl relative overflow-hidden">
+                  <div className="rounded-2xl bg-aura-secondary p-6 sm:p-8 text-[#141413] border border-[#e6dfd8] shadow-lg relative overflow-hidden">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
 
-                      <div className="lg:col-span-4 flex flex-col items-center justify-center text-center border-b lg:border-b-0 lg:border-r border-[#252320] pb-6 lg:pb-0 lg:pr-6 space-y-3">
+                      <div className="lg:col-span-4 flex flex-col items-center justify-center text-center border-b lg:border-b-0 lg:border-r border-[#e6dfd8] pb-6 lg:pb-0 lg:pr-6 space-y-3">
                         <div className="relative flex items-center justify-center">
                           <svg className="w-32 h-32 transform -rotate-90">
                             <circle
                               cx="64"
                               cy="64"
                               r="54"
-                              stroke="#252320"
+                              stroke="#e6dfd8"
                               strokeWidth="10"
                               fill="transparent"
                             />
@@ -1281,7 +1379,7 @@ function ScreeningContent() {
                               r="54"
                               stroke={
                                 evalResult.overallScore >= 85
-                                  ? "#5db8a6"
+                                  ? "#2d6a4f"
                                   : evalResult.overallScore >= 70
                                     ? "#e8a55a"
                                     : "#c64545"
@@ -1295,34 +1393,34 @@ function ScreeningContent() {
                             />
                           </svg>
                           <div className="absolute flex flex-col items-center">
-                            <span className="font-mono text-3xl font-bold text-[#faf9f5]">
+                            <span className="font-mono text-3xl font-bold text-[#141413]">
                               {evalResult.overallScore}%
                             </span>
-                            <span className="text-[10px] font-mono text-[#a09d96]">MATCH SCORE</span>
+                            <span className="text-[10px] font-mono text-[#6c6a64] font-semibold">MATCH SCORE</span>
                           </div>
                         </div>
 
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#252320] border border-[#3d3d3a]">
-                          <Award size={14} className="text-[#e8a55a]" />
-                          <span className="text-xs font-mono text-[#faf9f5]">
-                            RATING FIT: <strong className="text-[#5db8a6]">{evalResult.fitRating}</strong>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-[#e6dfd8] shadow-xs">
+                          <Award size={14} className="text-[#cc785c]" />
+                          <span className="text-xs font-mono text-[#141413]">
+                            RATING FIT: <strong className="text-[#2d6a4f]">{evalResult.fitRating}</strong>
                           </span>
                         </div>
                       </div>
 
                       <div className="lg:col-span-8 space-y-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#252320] pb-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e6dfd8] pb-3">
                           <div>
-                            <div className="text-xs font-mono text-[#a09d96]">CANDIDATE NAME</div>
-                            <h2 className="font-serif text-2xl text-[#faf9f5]">{evalResult.candidateName}</h2>
+                            <div className="text-xs font-mono text-[#6c6a64]">CANDIDATE NAME</div>
+                            <h2 className="font-serif text-2xl text-[#141413]">{evalResult.candidateName}</h2>
                           </div>
 
                           <div
                             className={`px-4 py-1.5 rounded-full text-xs font-mono font-bold tracking-wide border uppercase ${evalResult.verdictBadge.includes("RECOMMENDED")
-                              ? "bg-[#5db8a6]/15 text-[#5db8a6] border-[#5db8a6]/40"
+                              ? "bg-[#d8f3dc] text-[#2d6a4f] border-[#b7e4c7]"
                               : evalResult.verdictBadge.includes("POTENTIAL")
-                                ? "bg-[#e8a55a]/15 text-[#e8a55a] border-[#e8a55a]/40"
-                                : "bg-[#c64545]/15 text-[#c64545] border-[#c64545]/40"
+                                ? "bg-[#fef3c7] text-[#b45309] border-[#fde68a]"
+                                : "bg-[#fee2e2] text-[#b91c1c] border-[#fecaca]"
                               }`}
                           >
                             {evalResult.verdictBadge}
@@ -1330,11 +1428,11 @@ function ScreeningContent() {
                         </div>
 
                         <div className="space-y-1.5">
-                          <div className="text-xs font-mono text-[#cc785c] flex items-center gap-1.5">
+                          <div className="text-xs font-mono text-[#cc785c] flex items-center gap-1.5 font-semibold">
                             <Cpu size={13} />
-                            <span>FASTAPI AGENT VERDICT ({evalResult.metadata?.agentEngine || "FastAPI"}):</span>
+                            <span>AI SCREENING VERDICT:</span>
                           </div>
-                          <p className="text-sm font-sans text-[#e6dfd8] leading-relaxed">
+                          <p className="text-sm font-sans text-[#3d3d3a] leading-relaxed">
                             {evalResult.executiveSummary}
                           </p>
                         </div>
@@ -1342,23 +1440,15 @@ function ScreeningContent() {
                         <div className="pt-2 flex flex-wrap items-center gap-3">
                           <button
                             onClick={handleCopySummary}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#252320] hover:bg-[#3d3d3a] text-xs font-mono text-[#faf9f5] border border-[#3d3d3a] transition-all"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-[#efe9de] text-xs font-mono text-[#141413] border border-[#e6dfd8] shadow-xs transition-all cursor-pointer"
                           >
                             <Copy size={13} />
                             <span>Copy Report</span>
                           </button>
 
                           <button
-                            onClick={handleDownloadJSON}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#252320] hover:bg-[#3d3d3a] text-xs font-mono text-[#faf9f5] border border-[#3d3d3a] transition-all"
-                          >
-                            <Download size={13} />
-                            <span>Export JSON</span>
-                          </button>
-
-                          <button
                             onClick={() => setCurrentStep(2)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#252320] hover:bg-[#3d3d3a] text-xs font-mono text-[#faf9f5] border border-[#3d3d3a] transition-all ml-auto"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-[#efe9de] text-xs font-mono text-[#141413] border border-[#e6dfd8] shadow-xs transition-all ml-auto cursor-pointer"
                           >
                             <RefreshCw size={13} />
                             <span>Add Another Candidate</span>
@@ -1377,7 +1467,7 @@ function ScreeningContent() {
 
                           <Link
                             href={selectedJobId ? `/dashboard?job_id=${selectedJobId}` : "/dashboard"}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium text-[#faf9f5] border border-white/20 shadow-xs transition-all"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white hover:bg-[#efe9de] text-xs font-medium text-[#141413] border border-[#e6dfd8] shadow-xs transition-all"
                           >
                             <LayoutDashboard size={13} />
                             <span>View in Dashboard</span>
