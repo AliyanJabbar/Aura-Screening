@@ -322,14 +322,14 @@ export default function ScreeningPage() {
 
   // --- Handlers: Run Evaluation via FastAPI /analyze-resume ---
   const handleStartEvaluation = async () => {
-    if (!resumeText || resumeText.trim().length < 30) {
-      toast.error("Please upload or share a valid resume before starting evaluation.");
+    if (!jobTitle.trim()) {
+      toast.error("Please specify a job title in Step 1.");
       setCurrentStep(1);
       return;
     }
 
-    if (!jobTitle.trim()) {
-      toast.error("Please specify a job title in the criteria step.");
+    if (!resumeText || resumeText.trim().length < 30) {
+      toast.error("Please upload or share a valid candidate resume in Step 2.");
       setCurrentStep(2);
       return;
     }
@@ -445,7 +445,7 @@ export default function ScreeningPage() {
                   Autonomous CV Screening Workspace
                 </h1>
                 <p className="text-sm text-[#3d3d3a] mt-1 max-w-2xl">
-                  Upload a resume or share a link, configure your job criteria, and launch human-level autonomous evaluation.
+                  Create a job and configure criteria, add candidate resumes, and launch human-level autonomous evaluation.
                 </p>
               </div>
 
@@ -459,7 +459,7 @@ export default function ScreeningPage() {
                     }`}
                 >
                   <span className="w-4 h-4 rounded-full bg-white/20 text-center text-[10px] leading-4 font-bold">1</span>
-                  <span>Input Resume</span>
+                  <span>Create Job</span>
                 </button>
 
                 <ChevronRight size={14} className="text-[#a09d96]" />
@@ -472,7 +472,7 @@ export default function ScreeningPage() {
                     }`}
                 >
                   <span className="w-4 h-4 rounded-full bg-white/20 text-center text-[10px] leading-4 font-bold">2</span>
-                  <span>Job Criteria</span>
+                  <span>Add Candidates</span>
                 </button>
 
                 <ChevronRight size={14} className="text-[#a09d96]" />
@@ -488,13 +488,13 @@ export default function ScreeningPage() {
                     }`}
                 >
                   <span className="w-4 h-4 rounded-full bg-white/20 text-center text-[10px] leading-4 font-bold">3</span>
-                  <span>AI Evaluation</span>
+                  <span>See Results</span>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* STEP 1: RESUME INPUT WORKSPACE */}
+          {/* STEP 1: CREATE JOB & EVALUATION CRITERIA */}
           {currentStep === 1 && (
             <motion.div
               initial={{ opacity: 0, y: 15 }}
@@ -503,189 +503,7 @@ export default function ScreeningPage() {
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#efe9de]/40 p-4 rounded-2xl border border-[#e6dfd8]">
                 <div>
-                  <h2 className="text-base font-semibold text-[#141413]">Step 1: Provide Candidate Resume</h2>
-                  <p className="text-xs text-[#6c6a64]">
-                    Choose your preferred source: Upload a document file, paste a direct web URL/link, or pick a sample candidate.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-1 bg-[#efe9de] p-1 rounded-xl border border-[#e6dfd8]">
-                  <button
-                    onClick={() => setInputTab("upload")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${inputTab === "upload"
-                      ? "bg-[#faf9f5] text-[#141413] shadow-xs font-semibold"
-                      : "text-[#6c6a64] hover:text-[#141413]"
-                      }`}
-                  >
-                    <Upload size={14} />
-                    <span>Upload File</span>
-                  </button>
-
-                  <button
-                    onClick={() => setInputTab("link")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${inputTab === "link"
-                      ? "bg-[#faf9f5] text-[#141413] shadow-xs font-semibold"
-                      : "text-[#6c6a64] hover:text-[#141413]"
-                      }`}
-                  >
-                    <LinkIcon size={14} />
-                    <span>Resume Link</span>
-                  </button>
-
-                  <button
-                    onClick={() => setInputTab("sample")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${inputTab === "sample"
-                      ? "bg-[#faf9f5] text-[#141413] shadow-xs font-semibold"
-                      : "text-[#6c6a64] hover:text-[#141413]"
-                      }`}
-                  >
-                    <Sparkles size={14} className="text-[#cc785c]" />
-                    <span>Quick Samples</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Upload File */}
-              {inputTab === "upload" && (
-                <div className="border-2 border-dashed border-[#e6dfd8] hover:border-[#cc785c] transition-colors rounded-2xl p-8 bg-[#faf9f5] text-center space-y-4"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    accept=".txt,.pdf,.doc,.docx,.md,.json"
-                    className="hidden"
-                  />
-                  <div className="w-12 h-12 rounded-2xl bg-[#efe9de] text-[#cc785c] flex items-center justify-center mx-auto border border-[#e6dfd8]">
-                    <Upload size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-[#141413]">Drag and drop your resume file here</h3>
-                    <p className="text-xs text-[#6c6a64] mt-1">Parses PDF, DOCX, TXT, Markdown, or JSON via FastAPI</p>
-                  </div>
-                  <button
-                    className="inline-flex items-center gap-2 rounded-md bg-[#cc785c] px-4 py-2 text-xs font-medium text-white transition-all hover:bg-[#a9583e]"
-                  >
-                    <FileText size={14} />
-                    <span>Select Resume File</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Share Link */}
-              {inputTab === "link" && (
-                <div className="border border-[#e6dfd8] rounded-2xl p-6 bg-[#faf9f5] space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#3d3d3a] mb-2">
-                      Share Resume Web URL / Public Link
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex-1">
-                        <LinkIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a09d96]" />
-                        <input
-                          type="url"
-                          value={resumeUrlInput}
-                          onChange={(e) => setResumeUrlInput(e.target.value)}
-                          placeholder="https://example.com/resume.pdf or https://raw.githubusercontent.com/..."
-                          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#e6dfd8] bg-[#efe9de]/30 text-xs text-[#141413] focus:outline-none focus:border-[#cc785c]"
-                        />
-                      </div>
-                      <button
-                        onClick={handleFetchUrl}
-                        disabled={isFetchingUrl}
-                        className="inline-flex items-center gap-2 rounded-xl bg-[#cc785c] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#a9583e] disabled:opacity-50"
-                      >
-                        {isFetchingUrl ? (
-                          <RefreshCw size={14} className="animate-spin" />
-                        ) : (
-                          <ExternalLink size={14} />
-                        )}
-                        <span>Extract Link</span>
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] text-[#6c6a64]">
-                    <Info size={13} className="text-[#cc785c]" />
-                    <span>Supports direct web pages, raw GitHub files, public PDF endpoints, or cloud storage links.</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Quick Samples */}
-              {inputTab === "sample" && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {SAMPLE_RESUMES.map((sample) => (
-                    <div
-                      key={sample.id}
-                      onClick={() => handleSelectSample(sample)}
-                      className={`p-4 rounded-xl border transition-all cursor-pointer space-y-2.5 ${resumeText === sample.text
-                        ? "border-[#cc785c] bg-[#efe9de]/50 ring-1 ring-[#cc785c]"
-                        : "border-[#e6dfd8] bg-[#faf9f5] hover:border-[#cc785c]/60"
-                        }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-xs text-[#141413]">{sample.name}</span>
-                        <span className="text-[10px] font-mono text-[#cc785c] bg-[#efe9de] px-2 py-0.5 rounded-full">
-                          Sample
-                        </span>
-                      </div>
-                      <p className="text-xs font-mono font-medium text-[#3d3d3a]">{sample.role}</p>
-                      <p className="text-[11px] text-[#6c6a64] leading-relaxed">{sample.snippet}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Text Preview */}
-              {resumeText && (
-                <div className="border border-[#e6dfd8] rounded-2xl bg-[#faf9f5] p-5 space-y-3">
-                  <div className="flex items-center justify-between border-b border-[#e6dfd8] pb-3">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-[#141413]">
-                      <FileText size={15} className="text-[#cc785c]" />
-                      <span>Extracted Resume Text Preview</span>
-                      <span className="text-[10px] font-mono text-[#6c6a64] bg-[#efe9de] px-2 py-0.5 rounded-full">
-                        Source: {resumeSource.toUpperCase()} {resumeFileName && `(${resumeFileName})`}
-                      </span>
-                    </div>
-                    <div className="text-[11px] font-mono text-[#6c6a64]">
-                      {resumeText.split(/\s+/).filter(Boolean).length} words • {resumeText.length} chars
-                    </div>
-                  </div>
-
-                  <textarea
-                    value={resumeText}
-                    onChange={(e) => setResumeText(e.target.value)}
-                    rows={8}
-                    className="w-full p-3 rounded-xl border border-[#e6dfd8] bg-[#efe9de]/20 font-mono text-xs text-[#141413] focus:outline-none focus:border-[#cc785c] leading-relaxed"
-                    placeholder="Resume text content will appear here..."
-                  />
-
-                  <div className="flex justify-end pt-2">
-                    <button
-                      onClick={() => setCurrentStep(2)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#cc785c] px-6 py-2.5 text-xs font-semibold text-white hover:bg-[#a9583e] shadow-xs"
-                    >
-                      <span>Proceed to Set Job Criteria</span>
-                      <ChevronRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* STEP 2: JOB CRITERIA CONFIGURATION */}
-          {currentStep === 2 && (
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#efe9de]/40 p-4 rounded-2xl border border-[#e6dfd8]">
-                <div>
-                  <h2 className="text-base font-semibold text-[#141413]">Step 2: Configure Job Requirements & Evaluation Criteria</h2>
+                  <h2 className="text-base font-semibold text-[#141413]">Step 1: Create Job & Evaluation Criteria</h2>
                   <p className="text-xs text-[#6c6a64]">
                     Define target title, required technical skills, minimum experience, and custom rubric constraints.
                   </p>
@@ -850,12 +668,206 @@ export default function ScreeningPage() {
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-[#e6dfd8] flex items-center justify-between gap-3">
+                  <div className="pt-3 border-t border-[#e6dfd8] flex items-center justify-end gap-3">
+                    <button
+                      onClick={() => {
+                        if (!jobTitle.trim()) {
+                          toast.error("Please enter a job title before proceeding.");
+                          return;
+                        }
+                        setCurrentStep(2);
+                      }}
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#cc785c] px-6 py-2.5 text-xs font-semibold text-white hover:bg-[#a9583e] shadow-xs transition-all active:scale-95"
+                    >
+                      <span>Proceed to Add Candidates</span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 2: ADD CANDIDATES */}
+          {currentStep === 2 && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#efe9de]/40 p-4 rounded-2xl border border-[#e6dfd8]">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-base font-semibold text-[#141413]">Step 2: Add Candidate Resume</h2>
+                    <span className="text-[11px] font-mono text-[#cc785c] bg-[#efe9de] px-2.5 py-0.5 rounded-full border border-[#e6dfd8]">
+                      For Job: {jobTitle || "Untitled Job"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#6c6a64] mt-1">
+                    Choose your preferred source: Upload a document file, paste a direct web URL/link, or pick a sample candidate.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1 bg-[#efe9de] p-1 rounded-xl border border-[#e6dfd8]">
+                  <button
+                    onClick={() => setInputTab("upload")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${inputTab === "upload"
+                      ? "bg-[#faf9f5] text-[#141413] shadow-xs font-semibold"
+                      : "text-[#6c6a64] hover:text-[#141413]"
+                      }`}
+                  >
+                    <Upload size={14} />
+                    <span>Upload File</span>
+                  </button>
+
+                  <button
+                    onClick={() => setInputTab("link")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${inputTab === "link"
+                      ? "bg-[#faf9f5] text-[#141413] shadow-xs font-semibold"
+                      : "text-[#6c6a64] hover:text-[#141413]"
+                      }`}
+                  >
+                    <LinkIcon size={14} />
+                    <span>Resume Link</span>
+                  </button>
+
+                  <button
+                    onClick={() => setInputTab("sample")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${inputTab === "sample"
+                      ? "bg-[#faf9f5] text-[#141413] shadow-xs font-semibold"
+                      : "text-[#6c6a64] hover:text-[#141413]"
+                      }`}
+                  >
+                    <Sparkles size={14} className="text-[#cc785c]" />
+                    <span>Quick Samples</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Upload File */}
+              {inputTab === "upload" && (
+                <div className="border-2 border-dashed border-[#e6dfd8] hover:border-[#cc785c] transition-colors rounded-2xl p-8 bg-[#faf9f5] text-center space-y-4"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept=".txt,.pdf,.doc,.docx,.md,.json"
+                    className="hidden"
+                  />
+                  <div className="w-12 h-12 rounded-2xl bg-[#efe9de] text-[#cc785c] flex items-center justify-center mx-auto border border-[#e6dfd8]">
+                    <Upload size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-[#141413]">Drag and drop your resume file here</h3>
+                    <p className="text-xs text-[#6c6a64] mt-1">Parses PDF, DOCX, TXT, Markdown, or JSON via FastAPI</p>
+                  </div>
+                  <button
+                    className="inline-flex items-center gap-2 rounded-md bg-[#cc785c] px-4 py-2 text-xs font-medium text-white transition-all hover:bg-[#a9583e]"
+                  >
+                    <FileText size={14} />
+                    <span>Select Resume File</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Share Link */}
+              {inputTab === "link" && (
+                <div className="border border-[#e6dfd8] rounded-2xl p-6 bg-[#faf9f5] space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#3d3d3a] mb-2">
+                      Share Resume Web URL / Public Link
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <LinkIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a09d96]" />
+                        <input
+                          type="url"
+                          value={resumeUrlInput}
+                          onChange={(e) => setResumeUrlInput(e.target.value)}
+                          placeholder="https://example.com/resume.pdf or https://raw.githubusercontent.com/..."
+                          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#e6dfd8] bg-[#efe9de]/30 text-xs text-[#141413] focus:outline-none focus:border-[#cc785c]"
+                        />
+                      </div>
+                      <button
+                        onClick={handleFetchUrl}
+                        disabled={isFetchingUrl}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#cc785c] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#a9583e] disabled:opacity-50"
+                      >
+                        {isFetchingUrl ? (
+                          <RefreshCw size={14} className="animate-spin" />
+                        ) : (
+                          <ExternalLink size={14} />
+                        )}
+                        <span>Extract Link</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] text-[#6c6a64]">
+                    <Info size={13} className="text-[#cc785c]" />
+                    <span>Supports direct web pages, raw GitHub files, public PDF endpoints, or cloud storage links.</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Samples */}
+              {inputTab === "sample" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {SAMPLE_RESUMES.map((sample) => (
+                    <div
+                      key={sample.id}
+                      onClick={() => handleSelectSample(sample)}
+                      className={`p-4 rounded-xl border transition-all cursor-pointer space-y-2.5 ${resumeText === sample.text
+                        ? "border-[#cc785c] bg-[#efe9de]/50 ring-1 ring-[#cc785c]"
+                        : "border-[#e6dfd8] bg-[#faf9f5] hover:border-[#cc785c]/60"
+                        }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-xs text-[#141413]">{sample.name}</span>
+                        <span className="text-[10px] font-mono text-[#cc785c] bg-[#efe9de] px-2.5 py-0.5 rounded-full">
+                          Sample
+                        </span>
+                      </div>
+                      <p className="text-xs font-mono font-medium text-[#3d3d3a]">{sample.role}</p>
+                      <p className="text-[11px] text-[#6c6a64] leading-relaxed">{sample.snippet}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Text Preview */}
+              {resumeText && (
+                <div className="border border-[#e6dfd8] rounded-2xl bg-[#faf9f5] p-5 space-y-3">
+                  <div className="flex items-center justify-between border-b border-[#e6dfd8] pb-3">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-[#141413]">
+                      <FileText size={15} className="text-[#cc785c]" />
+                      <span>Extracted Resume Text Preview</span>
+                      <span className="text-[10px] font-mono text-[#6c6a64] bg-[#efe9de] px-2 py-0.5 rounded-full">
+                        Source: {resumeSource.toUpperCase()} {resumeFileName && `(${resumeFileName})`}
+                      </span>
+                    </div>
+                    <div className="text-[11px] font-mono text-[#6c6a64]">
+                      {resumeText.split(/\s+/).filter(Boolean).length} words • {resumeText.length} chars
+                    </div>
+                  </div>
+
+                  <textarea
+                    value={resumeText}
+                    onChange={(e) => setResumeText(e.target.value)}
+                    rows={8}
+                    className="w-full p-3 rounded-xl border border-[#e6dfd8] bg-[#efe9de]/20 font-mono text-xs text-[#141413] focus:outline-none focus:border-[#cc785c] leading-relaxed"
+                    placeholder="Resume text content will appear here..."
+                  />
+
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
                     <button
                       onClick={() => setCurrentStep(1)}
-                      className="px-4 py-2.5 rounded-xl border border-[#e6dfd8] text-xs font-medium text-[#3d3d3a] hover:bg-[#efe9de]"
+                      className="px-4 py-2.5 rounded-xl border border-[#e6dfd8] text-xs font-medium text-[#3d3d3a] hover:bg-[#efe9de] transition-colors"
                     >
-                      Back to Resume
+                      ← Back to Job Details
                     </button>
 
                     <button
@@ -863,12 +875,26 @@ export default function ScreeningPage() {
                       className="inline-flex items-center gap-2 rounded-xl bg-[#cc785c] px-6 py-2.5 text-xs font-semibold text-white hover:bg-[#a9583e] shadow-md transition-all active:scale-95"
                     >
                       <Cpu size={15} />
-                      <span>Start FastAPI Evaluation</span>
+                      <span>Start Evaluation & See Results</span>
+                      <ChevronRight size={16} />
                     </button>
                   </div>
                 </div>
+              )}
 
-              </div>
+              {!resumeText && (
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    onClick={() => setCurrentStep(1)}
+                    className="px-4 py-2.5 rounded-xl border border-[#e6dfd8] text-xs font-medium text-[#3d3d3a] hover:bg-[#efe9de] transition-colors"
+                  >
+                    ← Back to Job Details
+                  </button>
+                  <p className="text-xs text-[#6c6a64]">
+                    Select or upload a candidate resume to evaluate.
+                  </p>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -1006,11 +1032,19 @@ export default function ScreeningPage() {
                           </button>
 
                           <button
-                            onClick={() => setCurrentStep(1)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#cc785c] hover:bg-[#a9583e] text-xs font-semibold text-white shadow-xs transition-all ml-auto"
+                            onClick={() => setCurrentStep(2)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#252320] hover:bg-[#3d3d3a] text-xs font-mono text-[#faf9f5] border border-[#3d3d3a] transition-all ml-auto"
                           >
                             <RefreshCw size={13} />
-                            <span>Screen Another CV</span>
+                            <span>Add Another Candidate</span>
+                          </button>
+
+                          <button
+                            onClick={() => setCurrentStep(1)}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#cc785c] hover:bg-[#a9583e] text-xs font-semibold text-white shadow-xs transition-all"
+                          >
+                            <Briefcase size={13} />
+                            <span>Create New Job</span>
                           </button>
                         </div>
                       </div>
