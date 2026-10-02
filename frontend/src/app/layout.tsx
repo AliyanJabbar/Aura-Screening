@@ -52,7 +52,7 @@ export default function RootLayout({
       className={`${cormorant.variable} ${inter.variable} ${jetbrainsMono.variable}`}
     >
       <body
-        className={`${inter.className} bg-[#faf9f5] text-[#141413] antialiased selection:bg-[#cc785c]/20 selection:text-[#cc785c]`}
+        className={`${inter.className} bg-[#faf9f5] text-[#141413] antialiased selection:bg-[#cc785c]/20 selection:text-[#141413]`}
       >
         <ClientLayout>{children}</ClientLayout>
       </body>

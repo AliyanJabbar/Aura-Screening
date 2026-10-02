@@ -352,13 +352,13 @@ export default function Pricing() {
                 className={`relative flex flex-col rounded-2xl p-8 transition-all duration-200 ${isCurrentPlan
                   ? "bg-[#141413] text-[#faf9f5] border-2 border-[#cc785c] shadow-xl ring-2 ring-[#cc785c]/30"
                   : tier.highlight
-                    ? "bg-[#181715] text-[#faf9f5] shadow-xl border border-[#252320]"
+                    ? "bg-aura-secondary text-[#141413] shadow-xl border border-[#e6dfd8]"
                     : "bg-[#faf9f5] text-[#141413] border border-[#e6dfd8] shadow-xs"
                   }`}
               >
                 {/* Badges */}
                 {isCurrentPlan ? (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[#cc785c] px-3.5 py-0.5 text-[11px] font-mono font-bold uppercase tracking-wider text-white shadow-sm flex items-center gap-1.5">
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-aura-primary px-3.5 py-0.5 text-[11px] font-mono font-bold uppercase tracking-wider text-white shadow-sm flex items-center gap-1.5">
                     <Check size={12} strokeWidth={3} />
                     <span>Selected Plan</span>
                   </div>
@@ -372,7 +372,7 @@ export default function Pricing() {
                 <div className="mb-8 space-y-3">
                   <div className="flex items-center justify-between">
                     <h3
-                      className={`text-xl font-medium ${isCurrentPlan || tier.highlight ? "text-[#faf9f5]" : "text-[#141413]"
+                      className={`text-xl font-medium ${isCurrentPlan ? "text-[#faf9f5]" : "text-[#141413]"
                         }`}
                     >
                       {tier.name}
@@ -389,14 +389,14 @@ export default function Pricing() {
                       {isYearly ? tier.price.yearly : tier.price.monthly}
                     </span>
                     <span
-                      className={`text-sm ${isCurrentPlan || tier.highlight ? "text-[#a09d96]" : "text-[#6c6a64]"
+                      className={`text-sm ${isCurrentPlan ? "text-[#a09d96]" : "text-[#6c6a64]"
                         }`}
                     >
                       /month
                     </span>
                   </div>
                   <p
-                    className={`text-xs leading-relaxed ${isCurrentPlan || tier.highlight ? "text-[#a09d96]" : "text-[#3d3d3a]"
+                    className={`text-xs leading-relaxed ${isCurrentPlan ? "text-[#a09d96]" : "text-[#3d3d3a]"
                       }`}
                   >
                     {tier.description}
@@ -410,10 +410,10 @@ export default function Pricing() {
                       <Check
                         size={16}
                         className={`shrink-0 ${isCurrentPlan
-                          ? "text-[#cc785c]"
+                          ? "text-aura-primary"
                           : tier.highlight
                             ? "text-[#5db8a6]"
-                            : "text-[#cc785c]"
+                            : "text-aura-primary"
                           }`}
                       />
                       <span>{feature}</span>

@@ -78,14 +78,14 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="lg:col-span-5"
           >
-            <div className="rounded-2xl bg-[#181715] p-6 text-[#faf9f5] border border-[#252320] shadow-2xl space-y-5">
+            <div className="rounded-2xl bg-aura-secondary p-6 text-[#141413] border border-[#e6dfd8] shadow-2xl space-y-5">
               {/* Window Header Chrome */}
-              <div className="flex items-center justify-between border-b border-[#252320] pb-4">
+              <div className="flex items-center justify-between border-b border-[#e6dfd8] pb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-[#c64545]" />
                   <div className="w-3 h-3 rounded-full bg-[#e8a55a]" />
                   <div className="w-3 h-3 rounded-full bg-[#5db8a6]" />
-                  <span className="ml-2 font-mono text-xs text-[#a09d96]">evaluator_engine.v2.py</span>
+                  <span className="ml-2 font-mono text-xs text-[#6c6a64]">evaluator_engine.v2.py</span>
                 </div>
                 <span className="text-[10px] font-mono text-[#5db8a6] bg-[#5db8a6]/10 px-2 py-0.5 rounded-full border border-[#5db8a6]/20">
                   LIVE RUN
@@ -93,61 +93,61 @@ export default function Hero() {
               </div>
 
               {/* Candidate Info Badge */}
-              <div className="bg-[#252320] p-3.5 rounded-xl border border-[#3d3d3a]/30 flex items-center justify-between">
+              <div className="bg-[#efe9de] p-3.5 rounded-xl border border-[#e6dfd8] flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#cc785c] text-white flex items-center justify-center font-medium text-xs">
+                  <div className="w-9 h-9 rounded-full bg-aura-primary text-white flex items-center justify-center font-medium text-xs">
                     AR
                   </div>
                   <div>
-                    <div className="text-xs font-medium text-white">Alex Rivera, Lead AI Architect</div>
-                    <div className="text-[11px] font-mono text-[#a09d96]">12 yrs exp • Stanford MS CS</div>
+                    <div className="text-xs font-medium text-[#141413]">Alex Rivera, Lead AI Architect</div>
+                    <div className="text-[11px] font-mono text-[#6c6a64]">12 yrs exp • Stanford MS CS</div>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-mono font-bold text-[#5db8a6]">96.4%</div>
-                  <div className="text-[10px] font-mono text-[#a09d96]">MATCH CONFIDENCE</div>
+                  <div className="text-[10px] font-mono text-[#6c6a64]">MATCH CONFIDENCE</div>
                 </div>
               </div>
 
               {/* Realtime AI Reasoning Stream */}
-              <div className="bg-[#1f1e1b] rounded-xl p-4 font-mono text-xs space-y-2.5 border border-[#252320]">
-                <div className="text-[#a09d96] flex items-center gap-1.5 text-[11px]">
-                  <Cpu size={12} className="text-[#cc785c]" />
+              <div className="bg-[#faf9f5] rounded-xl p-4 font-mono text-xs space-y-2.5 border border-[#e6dfd8]">
+                <div className="text-[#6c6a64] flex items-center gap-1.5 text-[11px]">
+                  <Cpu size={12} className="text-aura-primary" />
                   <span>CRITERIA SCORE EVALUATION:</span>
                 </div>
 
                 <div className="space-y-1.5 pt-1">
                   <div className="flex justify-between items-center text-[11px]">
-                    <span className="text-[#faf9f5]">Distributed AI Infrastructure</span>
+                    <span className="text-[#141413]">Distributed AI Infrastructure</span>
                     <span className="text-[#5db8a6]">10/10 (Expert)</span>
                   </div>
-                  <div className="w-full bg-[#252320] h-1.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-[#e6dfd8] h-1.5 rounded-full overflow-hidden">
                     <div className="bg-[#5db8a6] h-full rounded-full w-[100%]" />
                   </div>
                 </div>
 
                 <div className="space-y-1.5 pt-1">
                   <div className="flex justify-between items-center text-[11px]">
-                    <span className="text-[#faf9f5]">PyTorch & LLM Inference Tuning</span>
+                    <span className="text-[#141413]">PyTorch & LLM Inference Tuning</span>
                     <span className="text-[#5db8a6]">9.5/10 (Strong)</span>
                   </div>
-                  <div className="w-full bg-[#252320] h-1.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-[#e6dfd8] h-1.5 rounded-full overflow-hidden">
                     <div className="bg-[#5db8a6] h-full rounded-full w-[95%]" />
                   </div>
                 </div>
 
-                <div className="pt-2 text-[11px] text-[#a09d96] border-t border-[#252320] leading-relaxed">
+                <div className="pt-2 text-[11px] text-[#6c6a64] border-t border-[#e6dfd8] leading-relaxed">
                   <span className="text-[#e8a55a] font-semibold">AI Decision Log:</span> Candidate exhibits rare alignment with cross-modal architecture requirements. Recommend instant interview shortlist.
                 </div>
               </div>
 
               {/* Status Bar */}
-              <div className="flex items-center justify-between text-[11px] text-[#a09d96] pt-1">
+              <div className="flex items-center justify-between text-[11px] text-[#6c6a64] pt-1">
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck size={13} className="text-[#5db8a6]" />
                   Anonymized Demographics Applied
                 </span>
-                <span className="font-mono text-[#cc785c]">Rank #1 of 1,420</span>
+                <span className="font-mono text-aura-primary">Rank #1 of 1,420</span>
               </div>
 
             </div>

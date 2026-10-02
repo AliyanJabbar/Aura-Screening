@@ -1,228 +1,314 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
 import { motion } from "motion/react";
-import {
-  FileCheck,
-  Cpu,
-  Sparkles,
-  Users,
-  Sliders,
-  Shield,
-  Layers,
-  CheckCircle2,
-} from "lucide-react";
+import Stepper, { Step } from "@/components/ui/stepper";
+import { ArrowRight, ChevronRight, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function ProductMockup() {
-  const candidates = [
+  const [activeStep, setActiveStep] = useState(1);
+
+  const stepsList = [
     {
-      name: "Elena Rostova",
-      role: "Senior Staff Machine Learning Engineer",
-      experience: "10 yrs exp • ex-DeepMind • PhD Tech University",
-      matchScore: "98.2%",
-      skills: ["PyTorch", "Distributed Training", "CUDA", "LLM Fine-Tuning"],
-      status: "Shortlisted",
+      step: 1,
+      title: "Set Job Description",
+      shortDesc: "Define criteria benchmarks, years of experience, and required skills.",
     },
     {
-      name: "Marcus Vance",
-      role: "Principal Infrastructure Architect",
-      experience: "14 yrs exp • ex-[#Anthropic] • MS MIT",
-      matchScore: "95.6%",
-      skills: ["Kubernetes", "Rust", "Distributed Systems", "GPU Clusters"],
-      status: "Shortlisted",
+      step: 2,
+      title: "Add Candidates",
+      shortDesc: "Upload resumes directly, provide portfolio links, or connect a Google Sheet.",
     },
     {
-      name: "Priya Sharma",
-      role: "Lead NLP Researcher & Algorithm Specialist",
-      experience: "8 yrs exp • Carnegie Mellon MS",
-      matchScore: "92.1%",
-      skills: ["Transformers", "RAG Systems", "Vector Databases", "Python"],
-      status: "Under Review",
+      step: 3,
+      title: "View Dashboard",
+      shortDesc: "Inspect created jobs, real-time ranked candidates, and credit consumption.",
     },
   ];
 
   return (
-    <section id="pipeline" className="py-24 bg-[#faf9f5]">
-      <div className="container mx-auto px-6 max-w-6xl">
-        {/* Section Header */}
-        <div className="mb-16 text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#efe9de] border border-[#e6dfd8]">
-            <Sparkles size={14} className="text-[#cc785c]" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#141413]">
-              AI Screening Pipeline
-            </span>
-          </div>
-
-          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#141413] tracking-tight font-normal">
-            Inspect live candidate evaluation in real-time.
-          </h2>
-
-          <p className="text-base sm:text-lg text-[#3d3d3a] max-w-2xl mx-auto font-sans leading-relaxed">
-            Observe how AuraScreening extracts candidate experience, checks semantic alignment against job specifications, and generates transparent evaluation logs.
-          </p>
-        </div>
-
-        {/* Dark Navy Product Surface Mockup */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="rounded-2xl bg-[#181715] p-4 sm:p-8 text-[#faf9f5] border border-[#252320] shadow-2xl space-y-6"
-        >
-          {/* Top Control Chrome */}
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#252320] pb-5">
-            <div className="flex items-center gap-3">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-[#c64545]" />
-                <div className="w-3 h-3 rounded-full bg-[#e8a55a]" />
-                <div className="w-3 h-3 rounded-full bg-[#5db8a6]" />
-              </div>
-              <div className="h-4 w-px bg-[#252320]" />
-              <div className="flex items-center gap-2 text-xs font-mono text-[#a09d96]">
-                <FileCheck size={14} className="text-[#cc785c]" />
-                <span>Job Requirement: Senior AI & Infrastructure Architect</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-mono text-[#a09d96] hidden sm:inline">
-                Batch Run #4812 • 450 CVs
-              </span>
-              <span className="text-xs font-mono bg-[#cc785c] text-white px-3 py-1 rounded-md font-semibold">
-                Autonomous Mode Active
+    <section id="pipeline" className="py-20 sm:py-24 bg-[#faf9f5]">
+      <div className="container mx-auto px-4 sm:px-6 max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          
+          {/* Left Column: Editorial Text & Interactive Step Guide */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="lg:col-span-5 space-y-6"
+          >
+            {/* Category Tag */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#efe9de] border border-[#e6dfd8]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#cc785c]" />
+              <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[#cc785c]">
+                Simple 3-Step Process
               </span>
             </div>
-          </div>
 
-          {/* Main Pipeline Interface Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            {/* Left Sidebar - Evaluation Controls (4 cols) */}
-            <div className="lg:col-span-4 bg-[#1f1e1b] rounded-xl p-5 border border-[#252320] space-y-5">
-              <div className="text-xs font-mono font-bold text-[#a09d96] uppercase tracking-wider">
-                Evaluation Criteria Weights
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-[#faf9f5]">Core Technical Mastery</span>
-                    <span className="text-[#cc785c]">40%</span>
-                  </div>
-                  <div className="w-full bg-[#252320] h-2 rounded-full">
-                    <div className="bg-[#cc785c] h-full rounded-full w-[40%]" />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-[#faf9f5]">System Architecture & Scale</span>
-                    <span className="text-[#cc785c]">30%</span>
-                  </div>
-                  <div className="w-full bg-[#252320] h-2 rounded-full">
-                    <div className="bg-[#cc785c] h-full rounded-full w-[30%]" />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-[#faf9f5]">Leadership & Impact</span>
-                    <span className="text-[#cc785c]">20%</span>
-                  </div>
-                  <div className="w-full bg-[#252320] h-2 rounded-full">
-                    <div className="bg-[#cc785c] h-full rounded-full w-[20%]" />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-[#faf9f5]">Domain Alignment</span>
-                    <span className="text-[#cc785c]">10%</span>
-                  </div>
-                  <div className="w-full bg-[#252320] h-2 rounded-full">
-                    <div className="bg-[#cc785c] h-full rounded-full w-[10%]" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-[#252320] space-y-3">
-                <div className="flex items-center justify-between text-xs text-[#a09d96]">
-                  <span>Blind Bias Shield</span>
-                  <span className="text-[#5db8a6] font-mono">ENABLED</span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-[#a09d96]">
-                  <span>Strict Experience Guard</span>
-                  <span className="text-[#5db8a6] font-mono">ACTIVE (8+ yrs)</span>
-                </div>
-              </div>
+            {/* Headline & Description */}
+            <div className="space-y-3">
+              <h2 className="font-serif text-3xl sm:text-4xl lg:text-[40px] text-[#141413] tracking-tight leading-[1.15] font-normal">
+                How Autonomous Screening Works
+              </h2>
+              <p className="text-sm sm:text-base text-[#3d3d3a] leading-relaxed font-sans">
+                Experience an end-to-end recruitment pipeline designed for speed and objectivity. Configure role rubrics, intake candidate profiles across any format, and review transparent AI evaluations in real time.
+              </p>
             </div>
 
-            {/* Right Main Panel - Candidate Score List (8 cols) */}
-            <div className="lg:col-span-8 space-y-4">
-              <div className="flex items-center justify-between text-xs font-mono text-[#a09d96] pb-1">
-                <span>RANK ORDERED CANDIDATE MATCHES</span>
-                <span>SORTED BY CONFIDENCE SCORE</span>
-              </div>
-
-              {candidates.map((candidate, idx) => (
-                <div
-                  key={idx}
-                  className="bg-[#252320] rounded-xl p-4 border border-[#3d3d3a]/30 hover:border-[#cc785c]/50 transition-colors space-y-3"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-xs font-bold text-[#cc785c]">
-                        #{idx + 1}
-                      </span>
-                      <div>
-                        <div className="text-sm font-medium text-white flex items-center gap-2">
-                          {candidate.name}
-                          {idx === 0 && (
-                            <span className="text-[10px] bg-[#5db8a6]/20 text-[#5db8a6] border border-[#5db8a6]/30 px-2 py-0.5 rounded-full font-mono">
-                              TOP MATCH
-                            </span>
+            {/* Interactive Step Navigator */}
+            <div className="space-y-2 pt-1">
+              {stepsList.map((item) => {
+                const isActive = activeStep === item.step;
+                return (
+                  <button
+                    key={item.step}
+                    type="button"
+                    onClick={() => setActiveStep(item.step)}
+                    className={cn(
+                      "w-full text-left p-3 sm:p-3.5 rounded-xl border transition-all flex items-start gap-3 cursor-pointer group",
+                      isActive
+                        ? "bg-[#efe9de] border-[#cc785c]/50 shadow-xs"
+                        : "bg-transparent border-transparent hover:bg-[#efe9de]/50"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-7 h-7 rounded-full flex items-center justify-center font-mono text-xs font-semibold shrink-0 transition-all",
+                        isActive
+                          ? "bg-[#cc785c] text-white shadow-xs"
+                          : "bg-[#e6dfd8] text-[#6c6a64] group-hover:bg-[#ded5c8] group-hover:text-[#141413]"
+                      )}
+                    >
+                      {item.step}
+                    </div>
+                    <div className="space-y-0.5 min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4
+                          className={cn(
+                            "text-sm font-semibold transition-colors",
+                            isActive ? "text-[#141413]" : "text-[#3d3d3a]"
                           )}
-                        </div>
-                        <div className="text-xs text-[#a09d96]">
-                          {candidate.role} • {candidate.experience}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <div className="text-base font-mono font-bold text-[#5db8a6]">
-                        {candidate.matchScore}
-                      </div>
-                      <div className="text-[10px] text-[#a09d96] font-mono">MATCH FIT</div>
-                    </div>
-                  </div>
-
-                  {/* Skills badges */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#1f1e1b]">
-                    <div className="flex flex-wrap gap-1.5">
-                      {candidate.skills.map((skill, sIdx) => (
-                        <span
-                          key={sIdx}
-                          className="text-[11px] font-mono bg-[#1f1e1b] text-[#faf9f5] px-2 py-0.5 rounded border border-[#3d3d3a]/40"
                         >
-                          {skill}
-                        </span>
-                      ))}
+                          {item.title}
+                        </h4>
+                        <ChevronRight
+                          size={14}
+                          className={cn(
+                            "transition-transform text-[#6c6a64]",
+                            isActive && "text-[#cc785c] translate-x-0.5"
+                          )}
+                        />
+                      </div>
+                      <p className="text-xs text-[#6c6a64] leading-relaxed">
+                        {item.shortDesc}
+                      </p>
                     </div>
-
-                    <span className="text-xs font-mono text-[#5db8a6] flex items-center gap-1">
-                      <CheckCircle2 size={13} />
-                      {candidate.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                  </button>
+                );
+              })}
             </div>
 
-          </div>
-        </motion.div>
+            {/* CTA */}
+            <div className="pt-2 flex items-center gap-4">
+              <Link
+                href="/screening"
+                className="inline-flex items-center gap-2 rounded-md bg-[#cc785c] px-5 py-2.5 text-xs font-medium text-white transition-all hover:bg-[#a9583e] active:scale-95 shadow-xs"
+              >
+                <span>Launch Screening Portal</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Right Column: Product Mockup Stepper (Properly Sized & Reduced Width) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+            className="lg:col-span-7 flex justify-center lg:justify-end w-full"
+          >
+            <div className="w-full max-w-xl">
+              <Stepper
+                step={activeStep}
+                onStepChange={(step) => setActiveStep(step)}
+                initialStep={1}
+                backButtonText="Previous"
+                nextButtonText="Next"
+                stepCircleContainerClassName="w-full bg-aura-secondary border border-[#e6dfd8] shadow-lg rounded-2xl"
+              >
+                {/* STEP 1: Job Description */}
+                <Step>
+                  <div className="space-y-3.5">
+                    <div className="border-b border-[#e6dfd8] pb-3 flex items-center justify-between">
+                      <div>
+                        <span className="text-[11px] font-mono uppercase tracking-wider text-[#cc785c] font-semibold">
+                          Step 01
+                        </span>
+                        <h3 className="text-base sm:text-lg font-serif text-[#141413]">
+                          1. Set Job Description
+                        </h3>
+                      </div>
+                      <span className="text-[11px] font-mono text-[#6c6a64] bg-[#efe9de] px-2.5 py-1 rounded-md border border-[#e6dfd8]">
+                        Requirements
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-2.5">
+                      <div className="bg-[#efe9de] rounded-xl p-3.5 border border-[#e6dfd8] space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[#cc785c] font-bold text-sm leading-none">•</span>
+                          <h4 className="font-semibold text-xs sm:text-sm text-[#141413]">Set criteria</h4>
+                        </div>
+                        <p className="text-xs text-[#3d3d3a] leading-relaxed pl-3.5">
+                          Define evaluation benchmarks, rubric weights, and minimum fit thresholds.
+                        </p>
+                      </div>
+
+                      <div className="bg-[#efe9de] rounded-xl p-3.5 border border-[#e6dfd8] space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[#cc785c] font-bold text-sm leading-none">•</span>
+                          <h4 className="font-semibold text-xs sm:text-sm text-[#141413]">Years of experience</h4>
+                        </div>
+                        <p className="text-xs text-[#3d3d3a] leading-relaxed pl-3.5">
+                          Specify required seniority, minimum industry experience, and domain thresholds.
+                        </p>
+                      </div>
+
+                      <div className="bg-[#efe9de] rounded-xl p-3.5 border border-[#e6dfd8] space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[#cc785c] font-bold text-sm leading-none">•</span>
+                          <h4 className="font-semibold text-xs sm:text-sm text-[#141413]">Required skills etc...</h4>
+                        </div>
+                        <p className="text-xs text-[#3d3d3a] leading-relaxed pl-3.5">
+                          Outline essential tech stack competencies, tools, education, and role constraints.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Step>
+
+                {/* STEP 2: Candidates */}
+                <Step>
+                  <div className="space-y-3.5">
+                    <div className="border-b border-[#e6dfd8] pb-3 flex items-center justify-between">
+                      <div>
+                        <span className="text-[11px] font-mono uppercase tracking-wider text-[#cc785c] font-semibold">
+                          Step 02
+                        </span>
+                        <h3 className="text-base sm:text-lg font-serif text-[#141413]">
+                          2. Add Candidates
+                        </h3>
+                      </div>
+                      <span className="text-[11px] font-mono text-[#6c6a64] bg-[#efe9de] px-2.5 py-1 rounded-md border border-[#e6dfd8]">
+                        Multi-Source
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-2.5">
+                      <div className="bg-[#efe9de] rounded-xl p-3.5 border border-[#e6dfd8] space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[#cc785c] font-bold text-sm leading-none">•</span>
+                          <h4 className="font-semibold text-xs sm:text-sm text-[#141413]">Add candidate's resume</h4>
+                        </div>
+                        <p className="text-xs text-[#3d3d3a] leading-relaxed pl-3.5">
+                          Upload resume files directly (PDF, DOCX, TXT) with automatic text extraction.
+                        </p>
+                      </div>
+
+                      <div className="bg-[#efe9de] rounded-xl p-3.5 border border-[#e6dfd8] space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[#cc785c] font-bold text-sm leading-none">•</span>
+                          <h4 className="font-semibold text-xs sm:text-sm text-[#141413]">Add links of candidate's resumes</h4>
+                        </div>
+                        <p className="text-xs text-[#3d3d3a] leading-relaxed pl-3.5">
+                          Provide public web links, GitHub portfolios, or cloud documents.
+                        </p>
+                      </div>
+
+                      <div className="bg-[#efe9de] rounded-xl p-3.5 border border-[#e6dfd8] space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[#cc785c] font-bold text-sm leading-none">•</span>
+                          <h4 className="font-semibold text-xs sm:text-sm text-[#141413]">Attach Google Sheet with resume links</h4>
+                        </div>
+                        <p className="text-xs text-[#3d3d3a] leading-relaxed pl-3.5">
+                          Connect a Google Sheet for batch ingestion and synchronized screening.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Step>
+
+                {/* STEP 3: In Dashboard */}
+                <Step>
+                  <div className="space-y-3.5">
+                    <div className="border-b border-[#e6dfd8] pb-3 flex items-center justify-between">
+                      <div>
+                        <span className="text-[11px] font-mono uppercase tracking-wider text-[#cc785c] font-semibold">
+                          Step 03
+                        </span>
+                        <h3 className="text-base sm:text-lg font-serif text-[#141413]">
+                          3. View Dashboard
+                        </h3>
+                      </div>
+                      <span className="text-[11px] font-mono text-[#6c6a64] bg-[#efe9de] px-2.5 py-1 rounded-md border border-[#e6dfd8]">
+                        Results & Quota
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-2.5">
+                      <div className="bg-[#efe9de] rounded-xl p-3.5 border border-[#e6dfd8] space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[#cc785c] font-bold text-sm leading-none">•</span>
+                          <h4 className="font-semibold text-xs sm:text-sm text-[#141413]">View your created jobs</h4>
+                        </div>
+                        <p className="text-xs text-[#3d3d3a] leading-relaxed pl-3.5">
+                          Track all active job listings, descriptions, and candidate pipeline counts.
+                        </p>
+                      </div>
+
+                      <div className="bg-[#efe9de] rounded-xl p-3.5 border border-[#e6dfd8] space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[#cc785c] font-bold text-sm leading-none">•</span>
+                          <h4 className="font-semibold text-xs sm:text-sm text-[#141413]">View candidates evaluated in each job</h4>
+                        </div>
+                        <p className="text-xs text-[#3d3d3a] leading-relaxed pl-3.5">
+                          Access ranked candidate dossiers, semantic fit scores, and evaluation breakdowns.
+                        </p>
+                      </div>
+
+                      <div className="bg-[#efe9de] rounded-xl p-3.5 border border-[#e6dfd8] space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[#cc785c] font-bold text-sm leading-none">•</span>
+                          <h4 className="font-semibold text-xs sm:text-sm text-[#141413]">See how much credits you've used</h4>
+                        </div>
+                        <p className="text-xs text-[#3d3d3a] leading-relaxed pl-3.5">
+                          Check real-time credit consumption, balance, and evaluation quotas.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-1 flex justify-end">
+                      <Link
+                        href="/screening"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#cc785c] hover:text-[#a9583e] transition-colors"
+                      >
+                        <span>Launch Workspace</span>
+                        <ArrowRight size={13} />
+                      </Link>
+                    </div>
+                  </div>
+                </Step>
+              </Stepper>
+            </div>
+          </motion.div>
+
+        </div>
       </div>
     </section>
   );
 }
-
