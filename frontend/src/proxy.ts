@@ -11,8 +11,8 @@ export default function proxy(request: NextRequest) {
     request.cookies.get("better-auth.session_token")?.value ||
     request.cookies.get("__Secure-better-auth.session_token")?.value;
 
-  // 1. Check protected /screening route
-  if (pathname.startsWith("/screening")) {
+  // 1. Check protected /screening and /dashboard routes
+  if (pathname.startsWith("/screening") || pathname.startsWith("/dashboard")) {
     if (!sessionCookie) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname + request.nextUrl.search);
@@ -35,5 +35,12 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/screening", "/screening/:path*", "/login", "/register"],
+  matcher: [
+    "/screening",
+    "/screening/:path*",
+    "/dashboard",
+    "/dashboard/:path*",
+    "/login",
+    "/register",
+  ],
 };

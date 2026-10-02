@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { useSession, signOut } from "@/lib/auth-client";
-import { LogOut, LayoutDashboard, Menu, X, ChevronRight, User, Zap } from "lucide-react";
+import { LogOut, LayoutDashboard, Menu, X, ChevronRight, User, Zap, Briefcase } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -52,6 +52,7 @@ export default function Navbar() {
     { name: "Capabilities", href: "/#capabilities" },
     { name: "Pricing", href: "/#pricing" },
     { name: "Screening Portal", href: "/screening" },
+    { name: "Dashboard", href: "/dashboard" },
   ];
 
   const handleSmoothScroll = (
@@ -166,6 +167,12 @@ export default function Navbar() {
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator className="bg-[#e6dfd8]" />
                     <DropdownMenuItem className="focus:bg-[#efe9de] focus:text-[#141413] cursor-pointer rounded-lg my-0.5 p-0">
+                      <Link href="/dashboard" className="flex items-center gap-2.5 w-full text-xs font-medium py-2 px-2.5">
+                        <Briefcase className="h-4 w-4 text-[#cc785c]" />
+                        <span>Recruiter Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="focus:bg-[#efe9de] focus:text-[#141413] cursor-pointer rounded-lg my-0.5 p-0">
                       <Link href="/profile" className="flex items-center gap-2.5 w-full text-xs font-medium py-2 px-2.5">
                         <User className="h-4 w-4 text-[#cc785c]" />
                         <span>Profile & Credits</span>
@@ -270,6 +277,15 @@ export default function Navbar() {
                       </span>
                     </div>
                   )}
+
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-2 rounded-md bg-[#efe9de] px-4 py-2.5 text-xs font-medium text-[#141413] hover:bg-[#e8e0d2]"
+                  >
+                    <Briefcase size={14} className="text-[#cc785c]" />
+                    <span>Recruiter Dashboard</span>
+                  </Link>
 
                   <Link
                     href="/profile"

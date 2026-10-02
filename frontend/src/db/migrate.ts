@@ -105,6 +105,47 @@ async function runMigration() {
     );
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS "job" (
+      "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+      "user_id" TEXT NOT NULL,
+      "title" TEXT NOT NULL,
+      "department" TEXT,
+      "seniority" TEXT NOT NULL DEFAULT 'Senior',
+      "min_experience_years" REAL NOT NULL DEFAULT 3.0,
+      "required_skills" JSON,
+      "job_description" TEXT DEFAULT '',
+      "custom_criteria" TEXT DEFAULT '',
+      "status" TEXT NOT NULL DEFAULT 'active',
+      "created_at" TIMESTAMP NOT NULL DEFAULT NOW(),
+      "updated_at" TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS "candidate_evaluation" (
+      "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+      "job_id" TEXT NOT NULL REFERENCES "job"("id") ON DELETE CASCADE,
+      "user_id" TEXT NOT NULL,
+      "candidate_name" TEXT NOT NULL,
+      "candidate_email" TEXT,
+      "resume_snippet" TEXT,
+      "resume_raw_text" TEXT,
+      "match_score" INTEGER NOT NULL DEFAULT 0,
+      "fit_rating" TEXT NOT NULL DEFAULT 'Moderate Fit',
+      "verdict_badge" TEXT NOT NULL DEFAULT 'POTENTIAL CANDIDATE',
+      "executive_summary" TEXT,
+      "strengths" JSON,
+      "gaps_and_risks" JSON,
+      "rubric_scores" JSON,
+      "interview_questions" JSON,
+      "skill_matrix" JSON,
+      "hiring_status" TEXT NOT NULL DEFAULT 'screened',
+      "created_at" TIMESTAMP NOT NULL DEFAULT NOW(),
+      "updated_at" TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+  `;
+
   console.log("Tables created successfully!");
   const tables = await sql`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'`;
   console.log("Current DB Tables:", tables);
