@@ -149,7 +149,7 @@ function WidgetContent() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             className={clsx(
-              "fixed right-4 bottom-24 z-50 flex flex-col overflow-hidden rounded-2xl border border-[#252320] shadow-2xl bg-[#181715] text-[#faf9f5] md:right-8",
+              "fixed right-4 bottom-24 z-50 flex flex-col overflow-hidden rounded-2xl border border-[#252320] shadow-2xl bg-aura-secondary text-[#faf9f5] md:right-8",
               isLarge ? "h-[80vh] w-[90vw] md:w-[50vw]" : "h-[70vh] w-[90vw] md:w-[390px]"
             )}
             style={{ transition: "width 0.3s, height 0.3s" }}
@@ -241,7 +241,7 @@ function WidgetContent() {
             <div className="p-3 bg-[#1f1e1b] border-t border-[#252320]">
               <div className={clsx(
                 "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-all",
-                !isAuthenticated ? "border-[#252320] bg-[#181715] opacity-50" : "border-[#3d3d3a]/40 bg-[#181715] focus-within:border-[#cc785c]"
+                !isAuthenticated ? "border-[#252320] bg-aura-secondary opacity-50" : "border-[#3d3d3a]/40 bg-aura-secondary focus-within:border-[#cc785c]"
               )}>
                 <input
                   ref={inputRef}

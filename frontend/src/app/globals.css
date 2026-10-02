@@ -9,6 +9,10 @@
   --font-sans: var(--font-inter), Inter, StyreneB, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: var(--font-mono), JetBrains Mono, monospace;
 
+  /* Aura Theme Tokens */
+  --color-aura-primary: #cc785c;
+  --color-aura-secondary: #f5f0e8;
+
   --color-canvas: #faf9f5;
   --color-ink: #141413;
   --color-primary: #cc785c;
@@ -20,7 +24,7 @@
   --color-surface-soft: #f5f0e8;
   --color-surface-card: #efe9de;
   --color-surface-cream-strong: #e8e0d2;
-  --color-surface-dark: #181715;
+  --color-surface-dark: #f5f0e8;
   --color-surface-dark-elevated: #252320;
   --color-surface-dark-soft: #1f1e1b;
   
@@ -68,14 +72,16 @@
   --border: #e6dfd8;
   --input: #e6dfd8;
   --ring: #cc785c;
+  --aura-primary: #cc785c;
+  --aura-secondary: #f5f0e8;
 }
 
 .dark {
-  --background: #181715;
+  --background: #f5f0e8;
   --foreground: #faf9f5;
   --card: #252320;
   --card-foreground: #faf9f5;
-  --popover: #181715;
+  --popover: #f5f0e8;
   --popover-foreground: #faf9f5;
   --primary: #cc785c;
   --primary-foreground: #ffffff;
@@ -89,6 +95,8 @@
   --border: rgba(230, 223, 216, 0.15);
   --input: rgba(230, 223, 216, 0.2);
   --ring: #cc785c;
+  --aura-primary: #cc785c;
+  --aura-secondary: #f5f0e8;
 }
 
 @layer base {

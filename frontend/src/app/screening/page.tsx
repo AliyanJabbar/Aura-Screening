@@ -880,7 +880,7 @@ export default function ScreeningPage() {
               className="space-y-6"
             >
               {isEvaluating && (
-                <div className="rounded-2xl bg-[#181715] p-8 text-[#faf9f5] border border-[#252320] shadow-2xl space-y-6 text-center">
+                <div className="rounded-2xl bg-aura-secondary p-8 text-[#141413] border border-[#e6dfd8] shadow-2xl space-y-6 text-center">
                   <div className="w-16 h-16 rounded-full bg-[#cc785c]/20 border-2 border-[#cc785c] text-[#cc785c] flex items-center justify-center mx-auto animate-spin">
                     <Cpu size={32} />
                   </div>
@@ -910,7 +910,7 @@ export default function ScreeningPage() {
                 <div className="space-y-6">
 
                   {/* Top Score Banner */}
-                  <div className="rounded-2xl bg-[#181715] p-6 sm:p-8 text-[#faf9f5] border border-[#252320] shadow-2xl relative overflow-hidden">
+                  <div className="rounded-2xl bg-aura-secondary p-6 sm:p-8 text-[#141413] border border-[#e6dfd8] shadow-2xl relative overflow-hidden">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
 
                       <div className="lg:col-span-4 flex flex-col items-center justify-center text-center border-b lg:border-b-0 lg:border-r border-[#252320] pb-6 lg:pb-0 lg:pr-6 space-y-3">

@@ -3,7 +3,6 @@ import FeatureGrid from "@/components/home/feature-grid";
 import CtaBanner from "@/components/home/cta-banner";
 import ProductMockup from "@/components/home/product-mockup";
 import StatSection from "@/components/home/stat-section";
-import Testimonials from "@/components/home/testimonials";
 import Pricing from "@/components/home/pricing";
 
 export default function Home() {
@@ -17,9 +16,7 @@ export default function Home() {
 
       <FeatureGrid />
 
-      <Testimonials />
-
-      <Pricing/>
+      <Pricing />
 
       <CtaBanner />
     </div>
