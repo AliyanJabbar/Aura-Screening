@@ -1,160 +1,320 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "motion/react";
-import { ArrowRight, CheckCircle2, Cpu, ShieldCheck } from "lucide-react";
+import { Poppins } from "next/font/google";
+import { useState, useRef, useEffect } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { Play, Pause, Maximize2, X, Volume2, VolumeX , ArrowRight } from "lucide-react";
 
-export default function Hero() {
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "600", "700"],
+});
+
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+// Video from Cloudinary (optimized)
+const VIDEO_SRC = "https://res.cloudinary.com/zckaq7mm/video/upload/q_auto,f_auto,w_800/v1790975679/aura_screening.mp4";
+const VIDEO_POSTER = "https://res.cloudinary.com/zckaq7mm/video/upload/q_auto,f_auto,w_800/v1790975679/aura_screening.jpg";
+
+const VIDEO_SRC_FULL = "https://res.cloudinary.com/zckaq7mm/video/upload/q_auto,f_auto,w_1920/v1790975679/aura_screening.mp4";
+
+const SITE_STEPS = [
+  {
+    step: "Step 1",
+    title: "Create a Job",
+    stat: "10x",
+    statLabel: "faster",
+    description: "Screening resumes takes hours. Meet Aura Screening. Create a job with requirements and criteria.",
+  },
+  {
+    step: "Step 2",
+    title: "Add Candidates",
+    stat: "100%",
+    statLabel: "unbiased",
+    description: "Add candidates with resume URLs or upload. See evaluations and shortlist candidates.",
+  },
+  {
+    step: "Step 3",
+    title: "Shortlist Matches",
+    stat: "Top 1%",
+    statLabel: "matches",
+    description: "Find your best matches.",
+  }
+];
+
+/* ─────────────────────────────────────────────────────────────
+   Video framed as a CV page
+───────────────────────────────────────────────────────────── */
+function CvVideo({ onExpand }: { onExpand: () => void }) {
+  const reduce = useReducedMotion();
+  const [ready, setReady] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(!reduce);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const [stepIndex, setStepIndex] = useState(0);
+
+  useEffect(() => {
+    if (videoRef.current && videoRef.current.readyState >= 3) {
+      setReady(true);
+    }
+  }, []);
+
+  const handleTimeUpdate = () => {
+    if (!videoRef.current) return;
+    const time = videoRef.current.currentTime;
+    
+    setStepIndex(prev => {
+      let next = 0;
+      if (time >= 14) next = 2;
+      else if (time >= 9) next = 1;
+      
+      return prev !== next ? next : prev;
+    });
+  };
+
+  const currentStep = SITE_STEPS[stepIndex];
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
   return (
-    <section id="overview" className="relative pt-32 pb-24 md:pt-40 md:pb-32 bg-[#faf9f5]">
-      <div className="container mx-auto px-6 max-w-6xl">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-          
-          {/* Left Editorial Content (7 cols) */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="lg:col-span-7 space-y-6"
-          >
-            {/* Category Tag Pill */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#efe9de] border border-[#e6dfd8]">
-              <span className="w-2 h-2 rounded-full bg-[#cc785c] animate-pulse" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-[#141413]">
-                Autonomous Screening Engine
-              </span>
-            </div>
+    <div className="relative mx-auto w-full max-w-[470px]">
+      {/* Second page peeking out behind, like a stack of CVs */}
+      <div
+        aria-hidden
+        className="absolute inset-0 translate-x-3 translate-y-3 rotate-[3deg] rounded-md border border-[#e6dfd8] bg-[#efe9de]"
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 -translate-x-2 translate-y-1.5 -rotate-[2deg] rounded-md border border-[#e6dfd8] bg-[#f5f1e8]"
+      />
 
-            {/* Editorial Serif Display Headline */}
-            <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl text-[#141413] tracking-tight leading-[1.08] font-normal">
-              Autonomous candidate evaluation with human-level discernment.
+      {/* The CV */}
+      <motion.div
+        initial={reduce ? false : { opacity: 0, y: 24, rotate: -1 }}
+        animate={{ opacity: 1, y: 0, rotate: 0 }}
+        transition={{ duration: 0.7, delay: 0.2, ease: EASE }}
+        className="relative rounded-md border border-[#e6dfd8] bg-[#fffdf9] p-6 shadow-[0_24px_50px_-26px_rgba(20,20,19,0.45)] sm:p-7"
+      >
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <div
+            aria-hidden
+            className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[#efe9de] text-lg font-semibold text-[#6c6a64]"
+          >
+            ✓
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <motion.span
+                key={currentStep.step}
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs font-semibold text-[#6c6a64]"
+              >
+                {currentStep.step}
+              </motion.span>
+            </div>
+            <motion.p
+              key={currentStep.title}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="mt-1.5 text-sm font-semibold text-[#141413]"
+            >
+              {currentStep.title}
+            </motion.p>
+          </div>
+          <div className="text-right">
+            <motion.p
+              key={currentStep.stat}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-2xl font-bold leading-none text-[#5db8a6]"
+            >
+              {currentStep.stat}
+            </motion.p>
+            <motion.p
+              key={currentStep.statLabel}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-1 text-[11px] font-medium text-[#6c6a64]"
+            >
+              {currentStep.statLabel}
+            </motion.p>
+          </div>
+        </div>
+
+        <div className="my-5 h-px bg-[#e6dfd8]" />
+
+        {/* Video, placed where the CV's main section would be */}
+        <div className="group relative aspect-[16/10] overflow-hidden rounded bg-[#e8e0d2]">
+          <video
+            ref={videoRef}
+            src={VIDEO_SRC}
+            poster={VIDEO_POSTER}
+            autoPlay={!reduce}
+            loop
+            muted={isMuted}
+            playsInline
+            preload="metadata"
+            onCanPlay={() => setReady(true)}
+            onTimeUpdate={handleTimeUpdate}
+            aria-hidden
+            className={`h-full w-full object-cover transition-opacity duration-700 ${
+              ready ? "opacity-100" : "opacity-0"
+            }`}
+          />
+          {/* Controls overlay */}
+          <div className="absolute inset-0 flex items-end justify-start bg-gradient-to-t from-black/50 via-transparent to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={togglePlay}
+                aria-label={isPlaying ? "Pause video" : "Play video"}
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/90 text-[#141413] shadow-lg transition-transform hover:scale-105"
+              >
+                {isPlaying ? (
+                  <Pause size={18} className="fill-current" />
+                ) : (
+                  <Play size={18} className="ml-0.5 fill-current" />
+                )}
+              </button>
+              <button
+                onClick={toggleMute}
+                aria-label={isMuted ? "Unmute video" : "Mute video"}
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/90 text-[#141413] shadow-lg transition-transform hover:scale-105"
+              >
+                {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              </button>
+              <button
+                onClick={onExpand}
+                aria-label="Expand video"
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/90 text-[#141413] shadow-lg transition-transform hover:scale-105"
+              >
+                <Maximize2 size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Description */}
+        <div className="mt-5 min-h-[60px]">
+          <motion.p
+            key={currentStep.description}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-[13px] font-medium leading-[1.6] text-[#6c6a64]"
+          >
+            {currentStep.description}
+          </motion.p>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   HERO
+───────────────────────────────────────────────────────────── */
+export default function Hero() {
+  const [showPopup, setShowPopup] = useState(false);
+
+  return (
+    <>
+      <section
+      id="overview"
+      className={`${poppins.className} relative overflow-hidden bg-[#faf9f5] pb-24 pt-28 md:pb-32 md:pt-36`}
+    >
+      <div className="container mx-auto max-w-6xl px-6">
+        <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2 lg:gap-12">
+          {/* LEFT */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE }}
+          >
+            <h1 className="text-[32px] lg:text-[56px] font-bold uppercase leading-[1.05] tracking-tight text-[#141413] sm:text-[3.2rem] md:text-[3.6rem]">
+              AI-Powered CV Screening
+              <br />
             </h1>
 
-            {/* Sub-headline */}
-            <p className="text-base sm:text-lg text-[#3d3d3a] leading-relaxed max-w-xl font-sans">
-              Screen thousands of CVs against nuanced hiring requirements in seconds. 
-              Get transparent candidate scoring, skill verification, and bias-free rank ordering—built for modern talent teams.
+            <p className="mt-5 text-lg font-light uppercase tracking-[0.22em] text-[#6c6a64] sm:text-xl">
+              Fair hiring for every candidate.
             </p>
 
-            {/* CTAs */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
+            <p className="mt-6 text-[15px] font-light leading-[1.75] text-[#3d3d3a]">
+              Upload a batch of CVs along with your job description. Our AI engine instantly anonymizes profiles to eliminate bias, evaluating each candidate purely on their skills and experience. Get a ranked shortlist of the best fits, complete with detailed, objective reasoning.
+            </p>
+
+            <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
               <Link
                 href="/screening"
                 className="inline-flex items-center justify-center gap-2 rounded-md bg-[#cc785c] px-6 py-3 text-sm font-medium text-white transition-all hover:bg-[#a9583e] active:scale-95 shadow-xs"
               >
-                <span>Launch Screening Portal</span>
+                <span className="text-red">Start Screening </span>
                 <ArrowRight size={16} />
               </Link>
-
               <Link
                 href="#pipeline"
-                className="inline-flex items-center justify-center rounded-md border border-[#e6dfd8] bg-[#faf9f5] px-6 py-3 text-sm font-medium text-[#141413] transition-all hover:bg-[#efe9de]"
+                id="hero-pipeline-btn"
+                className="text-sm font-medium text-[#3d3d3a] underline decoration-[#cfc7bb] underline-offset-[6px] transition-colors hover:decoration-[#cc785c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#cc785c]"
               >
-                View Pipeline Specs
+                See how it works
               </Link>
             </div>
-
-            {/* Key Value Micro-list */}
-            <div className="pt-6 grid grid-cols-3 gap-4 border-t border-[#e6dfd8]">
-              <div className="flex items-center gap-2 text-xs font-medium text-[#3d3d3a]">
-                <CheckCircle2 size={14} className="text-[#5db8a6]" />
-                <span>Zero Demographic Bias</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs font-medium text-[#3d3d3a]">
-                <CheckCircle2 size={14} className="text-[#5db8a6]" />
-                <span>Semantic Skill Radar</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs font-medium text-[#3d3d3a]">
-                <CheckCircle2 size={14} className="text-[#5db8a6]" />
-                <span>Transparent AI Audit</span>
-              </div>
-            </div>
           </motion.div>
 
-          {/* Right Product Mockup Card (5 cols - Dark Navy Surface) */}
+          {/* RIGHT */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="lg:col-span-5"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
+            className="relative"
           >
-            <div className="rounded-2xl bg-aura-secondary p-6 text-[#141413] border border-[#e6dfd8] shadow-2xl space-y-5">
-              {/* Window Header Chrome */}
-              <div className="flex items-center justify-between border-b border-[#e6dfd8] pb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-[#c64545]" />
-                  <div className="w-3 h-3 rounded-full bg-[#e8a55a]" />
-                  <div className="w-3 h-3 rounded-full bg-[#5db8a6]" />
-                  <span className="ml-2 font-mono text-xs text-[#6c6a64]">evaluator_engine.v2.py</span>
-                </div>
-                <span className="text-[10px] font-mono text-[#5db8a6] bg-[#5db8a6]/10 px-2 py-0.5 rounded-full border border-[#5db8a6]/20">
-                  LIVE RUN
-                </span>
-              </div>
-
-              {/* Candidate Info Badge */}
-              <div className="bg-[#efe9de] p-3.5 rounded-xl border border-[#e6dfd8] flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-aura-primary text-white flex items-center justify-center font-medium text-xs">
-                    AR
-                  </div>
-                  <div>
-                    <div className="text-xs font-medium text-[#141413]">Alex Rivera, Lead AI Architect</div>
-                    <div className="text-[11px] font-mono text-[#6c6a64]">12 yrs exp • Stanford MS CS</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-mono font-bold text-[#5db8a6]">96.4%</div>
-                  <div className="text-[10px] font-mono text-[#6c6a64]">MATCH CONFIDENCE</div>
-                </div>
-              </div>
-
-              {/* Realtime AI Reasoning Stream */}
-              <div className="bg-[#faf9f5] rounded-xl p-4 font-mono text-xs space-y-2.5 border border-[#e6dfd8]">
-                <div className="text-[#6c6a64] flex items-center gap-1.5 text-[11px]">
-                  <Cpu size={12} className="text-aura-primary" />
-                  <span>CRITERIA SCORE EVALUATION:</span>
-                </div>
-
-                <div className="space-y-1.5 pt-1">
-                  <div className="flex justify-between items-center text-[11px]">
-                    <span className="text-[#141413]">Distributed AI Infrastructure</span>
-                    <span className="text-[#5db8a6]">10/10 (Expert)</span>
-                  </div>
-                  <div className="w-full bg-[#e6dfd8] h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-[#5db8a6] h-full rounded-full w-[100%]" />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 pt-1">
-                  <div className="flex justify-between items-center text-[11px]">
-                    <span className="text-[#141413]">PyTorch & LLM Inference Tuning</span>
-                    <span className="text-[#5db8a6]">9.5/10 (Strong)</span>
-                  </div>
-                  <div className="w-full bg-[#e6dfd8] h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-[#5db8a6] h-full rounded-full w-[95%]" />
-                  </div>
-                </div>
-
-                <div className="pt-2 text-[11px] text-[#6c6a64] border-t border-[#e6dfd8] leading-relaxed">
-                  <span className="text-[#e8a55a] font-semibold">AI Decision Log:</span> Candidate exhibits rare alignment with cross-modal architecture requirements. Recommend instant interview shortlist.
-                </div>
-              </div>
-
-              {/* Status Bar */}
-              <div className="flex items-center justify-between text-[11px] text-[#6c6a64] pt-1">
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck size={13} className="text-[#5db8a6]" />
-                  Anonymized Demographics Applied
-                </span>
-                <span className="font-mono text-aura-primary">Rank #1 of 1,420</span>
-              </div>
-
-            </div>
+            <CvVideo onExpand={() => setShowPopup(true)} />
           </motion.div>
-
         </div>
       </div>
     </section>
+
+      {/* Video Popup Modal */}
+      {showPopup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#141413]/90 px-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-5xl rounded-xl bg-black shadow-2xl">
+            <button
+              onClick={() => setShowPopup(false)}
+              className="absolute -right-4 -top-4 flex h-10 w-10 z-10 items-center justify-center rounded-full bg-white text-black shadow-md transition-transform hover:scale-105"
+              aria-label="Close video"
+            >
+              <X size={20} />
+            </button>
+            <div className="aspect-[16/10] w-full overflow-hidden rounded-xl">
+              <video
+                src={VIDEO_SRC_FULL}
+                controls
+                autoPlay
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
-}
+}

@@ -25,7 +25,7 @@ export default function ClientLayout({
       <SmoothScroll>
         <Navbar />
         {/* <AIAssistantWidget/> */}
-        <main className="flex min-h-screen flex-col overflow-hidden">
+        <main className="flex min-h-screen flex-col">
           {children}
         </main>
         {!AuthRoutes.includes(pathname) && <Footer />}
