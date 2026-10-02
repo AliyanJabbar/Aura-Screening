@@ -1,10 +1,11 @@
 import os
+import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from sqlmodel import SQLModel, Field, create_engine, Session
 from dotenv import load_dotenv
-from sqlalchemy import text
+from sqlalchemy import text, Column, JSON
 
 load_dotenv()
 # Environment Configuration
@@ -72,6 +73,47 @@ class Subscription(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+
+# --- RECRUITER WORKSPACE & CANDIDATE TRACKING MODELS ---
+class Job(SQLModel, table=True):
+    __tablename__ = "job"
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    user_id: str = Field(index=True)
+    title: str = Field(index=True)
+    department: Optional[str] = Field(default=None)
+    seniority: str = Field(default="Senior")
+    min_experience_years: float = Field(default=3.0)
+    required_skills: List[str] = Field(default_factory=list, sa_column=Column(JSON))
+    job_description: Optional[str] = Field(default="")
+    custom_criteria: Optional[str] = Field(default="")
+    status: str = Field(default="active")  # active, paused, archived
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class CandidateEvaluation(SQLModel, table=True):
+    __tablename__ = "candidate_evaluation"
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    job_id: str = Field(foreign_key="job.id", index=True)
+    user_id: str = Field(index=True)
+    candidate_name: str = Field(index=True)
+    candidate_email: Optional[str] = Field(default=None)
+    resume_snippet: Optional[str] = Field(default=None)
+    resume_raw_text: Optional[str] = Field(default=None)
+    match_score: int = Field(default=0)
+    fit_rating: str = Field(default="Moderate Fit")
+    verdict_badge: str = Field(default="POTENTIAL CANDIDATE")
+    executive_summary: Optional[str] = Field(default=None)
+    strengths: List[str] = Field(default_factory=list, sa_column=Column(JSON))
+    gaps_and_risks: List[str] = Field(default_factory=list, sa_column=Column(JSON))
+    rubric_scores: Optional[Dict[str, Any]] = Field(default_factory=dict, sa_column=Column(JSON))
+    interview_questions: List[Dict[str, Any]] = Field(default_factory=list, sa_column=Column(JSON))
+    skill_matrix: List[Dict[str, Any]] = Field(default_factory=list, sa_column=Column(JSON))
+    hiring_status: str = Field(default="screened")  # screened, shortlisted, interviewed, rejected
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 def init_db():
     SQLModel.metadata.create_all(engine)
     try:
@@ -83,4 +125,4 @@ def init_db():
 
 def get_session():
     with Session(engine) as session:
-        yield session
+        yield session

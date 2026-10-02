@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import { useSession } from "@/lib/auth-client";
 import Navbar from "@/components/layout/navbar";
@@ -26,6 +27,11 @@ import {
   ExternalLink,
   Info,
   Zap,
+  ArrowUpRight,
+  BookmarkPlus,
+  Save,
+  LayoutDashboard,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -158,9 +164,12 @@ const JOB_PRESETS = [
   },
 ];
 
-export default function ScreeningPage() {
+function ScreeningContent() {
   const { data: sessionData } = useSession();
   const user = sessionData?.user;
+  const searchParams = useSearchParams();
+  const paramJobId = searchParams.get("job_id");
+  const paramTitle = searchParams.get("title");
 
   const [usage, setUsage] = useState<{
     plan_name: string;
@@ -168,9 +177,27 @@ export default function ScreeningPage() {
     total_credits: number;
   } | null>(null);
 
+  // User's Saved Jobs for auto-selection
+  const [userJobs, setUserJobs] = useState<any[]>([]);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(paramJobId || null);
+  const [isSavingJob, setIsSavingJob] = useState<boolean>(false);
+
+  // Headers with bearer token
+  const getHeaders = () => {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (sessionData?.session?.token) {
+      headers["Authorization"] = `Bearer ${sessionData.session.token}`;
+    }
+    return headers;
+  };
+
   const fetchUsage = () => {
     if (!user?.id) return;
-    fetch(`${BACKEND_URL}/payments/profile-usage?user_id=${encodeURIComponent(user.id)}`)
+    fetch(`${BACKEND_URL}/payments/profile-usage?user_id=${encodeURIComponent(user.id)}`, {
+      headers: getHeaders(),
+    })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) setUsage(data);
@@ -181,6 +208,155 @@ export default function ScreeningPage() {
   useEffect(() => {
     fetchUsage();
   }, [user?.id]);
+
+  // Fetch saved jobs from backend
+  const fetchUserJobs = async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`${BACKEND_URL}/jobs?user_id=${encodeURIComponent(user.id)}`, {
+        headers: getHeaders(),
+      });
+      if (res.ok) {
+        const list = await res.json();
+        setUserJobs(list);
+        if (paramJobId) {
+          const matched = list.find((j: any) => j.id === paramJobId);
+          if (matched) {
+            setSelectedJobId(matched.id);
+            setJobTitle(matched.title);
+            setSeniority(matched.seniority);
+            setMinExpYears(matched.min_experience_years);
+            if (matched.required_skills?.length) setRequiredSkills(matched.required_skills);
+            if (matched.job_description) setJobDescription(matched.job_description);
+            if (matched.custom_criteria) setCustomCriteria(matched.custom_criteria);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load user jobs", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserJobs();
+  }, [user?.id, paramJobId]);
+
+  // Handle switching to another saved job
+  const handleSelectSavedJob = (jobId: string) => {
+    setSelectedJobId(jobId || null);
+    if (!jobId) {
+      handleResetNewJob();
+      return;
+    }
+    const found = userJobs.find((j) => j.id === jobId);
+    if (found) {
+      setJobTitle(found.title);
+      setSeniority(found.seniority);
+      setMinExpYears(found.min_experience_years);
+      if (found.required_skills && found.required_skills.length > 0) {
+        setRequiredSkills(found.required_skills);
+      }
+      if (found.job_description) setJobDescription(found.job_description);
+      if (found.custom_criteria) setCustomCriteria(found.custom_criteria);
+      toast.success(`Loaded saved job: ${found.title}`);
+    }
+  };
+
+  // Start fresh job configuration
+  const handleResetNewJob = () => {
+    setSelectedJobId(null);
+    setJobTitle("");
+    setSeniority("Senior");
+    setMinExpYears(3);
+    setRequiredSkills(["React", "TypeScript", "Node.js"]);
+    setJobDescription("");
+    setCustomCriteria("");
+    toast.info("Started fresh job form. Fill details and save to your dashboard.");
+  };
+
+  // Save current job configuration to backend database
+  const saveJobToDashboard = async (options?: {
+    silent?: boolean;
+    advanceStep?: boolean;
+  }): Promise<string | null> => {
+    if (!jobTitle.trim()) {
+      toast.error("Please enter a target job title.");
+      return null;
+    }
+    if (!user?.id) {
+      toast.error("Please log in to save this job to your dashboard.");
+      return null;
+    }
+
+    try {
+      setIsSavingJob(true);
+      const payload = {
+        title: jobTitle.trim(),
+        seniority: seniority,
+        min_experience_years: Number(minExpYears),
+        required_skills: requiredSkills,
+        job_description: jobDescription.trim(),
+        custom_criteria: customCriteria.trim(),
+        status: "active",
+      };
+
+      let savedId = selectedJobId;
+
+      if (selectedJobId) {
+        // Update existing job
+        const res = await fetch(
+          `${BACKEND_URL}/jobs/${selectedJobId}?user_id=${encodeURIComponent(user.id)}`,
+          {
+            method: "PATCH",
+            headers: getHeaders(),
+            body: JSON.stringify(payload),
+          }
+        );
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || "Failed to update job in dashboard");
+        }
+        const updatedJob = await res.json();
+        setUserJobs((prev) =>
+          prev.map((j) => (j.id === updatedJob.id ? updatedJob : j))
+        );
+        savedId = updatedJob.id;
+        if (!options?.silent) {
+          toast.success(`Job "${updatedJob.title}" updated in your dashboard!`);
+        }
+      } else {
+        // Create new job
+        const res = await fetch(
+          `${BACKEND_URL}/jobs?user_id=${encodeURIComponent(user.id)}`,
+          {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify(payload),
+          }
+        );
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || "Failed to save job to dashboard");
+        }
+        const newJob = await res.json();
+        setSelectedJobId(newJob.id);
+        setUserJobs((prev) => [newJob, ...prev]);
+        savedId = newJob.id;
+        toast.success(`Job "${newJob.title}" saved to your dashboard!`);
+      }
+
+      if (options?.advanceStep) {
+        setCurrentStep(2);
+      }
+      return savedId;
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Could not save job to dashboard.");
+      return null;
+    } finally {
+      setIsSavingJob(false);
+    }
+  };
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
@@ -297,13 +473,14 @@ export default function ScreeningPage() {
 
   // --- Handlers: Preset Pick ---
   const handleApplyPreset = (preset: (typeof JOB_PRESETS)[0]) => {
+    setSelectedJobId(null);
     setJobTitle(preset.title);
     setSeniority(preset.seniority);
     setMinExpYears(preset.minExp);
     setRequiredSkills([...preset.skills]);
     setJobDescription(preset.description);
     setCustomCriteria(preset.customCriteria);
-    toast.success(`Applied job criteria preset for ${preset.title}`);
+    toast.success(`Applied job criteria preset for ${preset.title}. Save or proceed to add to dashboard.`);
   };
 
   // --- Handlers: Skill Tags ---
@@ -352,9 +529,15 @@ export default function ScreeningPage() {
     }
 
     try {
+      // Ensure job is saved to dashboard so candidate evaluation attaches to it
+      let effectiveJobId = selectedJobId;
+      if (!effectiveJobId && user?.id) {
+        effectiveJobId = await saveJobToDashboard({ silent: true });
+      }
+
       const res = await fetch(`${BACKEND_URL}/analyze-resume`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getHeaders(),
         body: JSON.stringify({
           resume_text: resumeText,
           job_title: jobTitle,
@@ -364,6 +547,8 @@ export default function ScreeningPage() {
           job_description: jobDescription,
           custom_criteria: customCriteria,
           candidate_name: resumeSource === "sample" ? SAMPLE_RESUMES.find(s => s.text === resumeText)?.name : undefined,
+          job_id: effectiveJobId || undefined,
+          user_id: user?.id || undefined,
         }),
       });
 
@@ -371,12 +556,12 @@ export default function ScreeningPage() {
       if (!res.ok) throw new Error(data.detail || "FastAPI evaluation failed.");
 
       setEvalResult(data);
-      toast.success("Autonomous CV Evaluation Completed!");
+      toast.success("Autonomous CV Evaluation Completed & Tracked in Dashboard!");
 
       if (user?.id) {
         fetch(`${BACKEND_URL}/payments/record-usage`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: getHeaders(),
           body: JSON.stringify({ user_id: user.id }),
         })
           .then((res) => res.json())
@@ -430,6 +615,20 @@ export default function ScreeningPage() {
                     </span>
                   </div>
 
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#e6dfd8] hover:border-[#cc785c] text-[11px] text-[#141413] transition-colors shadow-xs group"
+                  >
+                    <LayoutDashboard size={13} className="text-[#cc785c]" />
+                    <span className="font-medium">My Dashboard</span>
+                    {userJobs.length > 0 && (
+                      <span className="bg-[#efe9de] text-[#3d3d3a] px-1.5 py-0.5 rounded-full text-[10px] font-mono">
+                        {userJobs.length} {userJobs.length === 1 ? "job" : "jobs"}
+                      </span>
+                    )}
+                    <span className="text-[#cc785c] group-hover:translate-x-0.5 transition-transform">→</span>
+                  </Link>
+
                   {usage && (
                     <Link
                       href="/profile"
@@ -465,7 +664,13 @@ export default function ScreeningPage() {
                 <ChevronRight size={14} className="text-[#a09d96]" />
 
                 <button
-                  onClick={() => setCurrentStep(2)}
+                  onClick={async () => {
+                    if (!selectedJobId && jobTitle.trim() && user?.id) {
+                      await saveJobToDashboard({ silent: true, advanceStep: true });
+                    } else {
+                      setCurrentStep(2);
+                    }
+                  }}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${currentStep === 2
                     ? "bg-[#cc785c] text-white shadow-xs"
                     : "text-[#3d3d3a] hover:bg-[#e8e0d2]"
@@ -509,22 +714,61 @@ export default function ScreeningPage() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-[#6c6a64]">Quick Presets:</span>
-                  <div className="flex items-center gap-1.5">
-                    {JOB_PRESETS.map((preset) => (
-                      <button
-                        key={preset.title}
-                        onClick={() => handleApplyPreset(preset)}
-                        className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all ${jobTitle === preset.title
-                          ? "bg-[#cc785c] text-white border-[#cc785c]"
-                          : "bg-[#faf9f5] border-[#e6dfd8] text-[#3d3d3a] hover:bg-[#efe9de]"
-                          }`}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {userJobs.length > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-mono text-[#cc785c] font-semibold">Your Jobs:</span>
+                      <select
+                        value={selectedJobId || ""}
+                        onChange={(e) => handleSelectSavedJob(e.target.value)}
+                        className="text-xs px-2.5 py-1 rounded-lg border border-[#cc785c] bg-white text-[#141413] focus:outline-none shadow-xs font-medium cursor-pointer"
                       >
-                        {preset.title.split(" ")[0]} {preset.title.split(" ")[1]}
-                      </button>
-                    ))}
+                        <option value="">-- New / Unsaved Job --</option>
+                        {userJobs.map((j) => (
+                          <option key={j.id} value={j.id}>
+                            {j.title} ({j.candidates_count} tracked)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleResetNewJob}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-lg border border-[#e6dfd8] bg-white hover:bg-[#efe9de] text-[#141413] transition-all shadow-xs cursor-pointer"
+                    title="Start fresh with a new job form"
+                  >
+                    <Plus size={12} className="text-[#cc785c]" />
+                    <span>+ New Job</span>
+                  </button>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-mono text-[#6c6a64]">Presets:</span>
+                    <div className="flex items-center gap-1.5">
+                      {JOB_PRESETS.map((preset) => (
+                        <button
+                          key={preset.title}
+                          type="button"
+                          onClick={() => handleApplyPreset(preset)}
+                          className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${jobTitle === preset.title
+                            ? "bg-[#cc785c] text-white border-[#cc785c]"
+                            : "bg-[#faf9f5] border-[#e6dfd8] text-[#3d3d3a] hover:bg-[#efe9de]"
+                            }`}
+                        >
+                          {preset.title.split(" ")[0]} {preset.title.split(" ")[1]}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-lg bg-[#efe9de] hover:bg-[#e4ded3] text-[#3d3d3a] border border-[#e6dfd8] transition-all"
+                  >
+                    <LayoutDashboard size={12} />
+                    <span>Dashboard</span>
+                  </Link>
                 </div>
               </div>
 
@@ -668,20 +912,72 @@ export default function ScreeningPage() {
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-[#e6dfd8] flex items-center justify-end gap-3">
-                    <button
-                      onClick={() => {
-                        if (!jobTitle.trim()) {
-                          toast.error("Please enter a job title before proceeding.");
-                          return;
-                        }
-                        setCurrentStep(2);
-                      }}
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#cc785c] px-6 py-2.5 text-xs font-semibold text-white hover:bg-[#a9583e] shadow-xs transition-all active:scale-95"
-                    >
-                      <span>Proceed to Add Candidates</span>
-                      <ChevronRight size={16} />
-                    </button>
+                  <div className="pt-4 border-t border-[#e6dfd8] flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      {selectedJobId ? (
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2d6a4f] bg-[#d8f3dc] px-2.5 py-1 rounded-lg border border-[#b7e4c7]">
+                            <CheckCircle2 size={13} className="text-[#2d6a4f]" />
+                            <span>Saved in Dashboard</span>
+                          </span>
+                          <Link
+                            href="/dashboard"
+                            className="inline-flex items-center gap-1 text-xs text-[#6c6a64] hover:text-[#cc785c] underline font-medium"
+                          >
+                            <span>Open in Dashboard</span>
+                            <ArrowUpRight size={12} />
+                          </Link>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-[#6c6a64]">
+                          Save this job to track candidates and view metrics in your dashboard.
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => saveJobToDashboard()}
+                        disabled={isSavingJob}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-[#e6dfd8] bg-white hover:bg-[#efe9de] px-4 py-2.5 text-xs font-medium text-[#141413] shadow-xs transition-all disabled:opacity-60 cursor-pointer"
+                      >
+                        {isSavingJob ? (
+                          <Loader2 size={14} className="animate-spin text-[#cc785c]" />
+                        ) : selectedJobId ? (
+                          <Save size={14} className="text-[#cc785c]" />
+                        ) : (
+                          <BookmarkPlus size={14} className="text-[#cc785c]" />
+                        )}
+                        <span>{selectedJobId ? "Update Job in Dashboard" : "Save Job to Dashboard"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!jobTitle.trim()) {
+                            toast.error("Please enter a job title before proceeding.");
+                            return;
+                          }
+                          if (user?.id) {
+                            await saveJobToDashboard({ silent: true, advanceStep: true });
+                          } else {
+                            setCurrentStep(2);
+                          }
+                        }}
+                        disabled={isSavingJob}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#cc785c] px-6 py-2.5 text-xs font-semibold text-white hover:bg-[#a9583e] shadow-xs transition-all active:scale-95 disabled:opacity-70 cursor-pointer"
+                      >
+                        {isSavingJob ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <>
+                            <span>Proceed to Add Candidates</span>
+                            <ChevronRight size={16} />
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -703,6 +999,11 @@ export default function ScreeningPage() {
                     <span className="text-[11px] font-mono text-[#cc785c] bg-[#efe9de] px-2.5 py-0.5 rounded-full border border-[#e6dfd8]">
                       For Job: {jobTitle || "Untitled Job"}
                     </span>
+                    {selectedJobId ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-[#2d6a4f] bg-[#d8f3dc] px-2.5 py-0.5 rounded-full border border-[#b7e4c7]">
+                        <CheckCircle2 size={11} /> Saved in Dashboard
+                      </span>
+                    ) : null}
                   </div>
                   <p className="text-xs text-[#6c6a64] mt-1">
                     Choose your preferred source: Upload a document file, paste a direct web URL/link, or pick a sample candidate.
@@ -935,6 +1236,30 @@ export default function ScreeningPage() {
               {!isEvaluating && evalResult && (
                 <div className="space-y-6">
 
+                  {/* Dashboard Tracking Notification Banner */}
+                  <div className="bg-[#efe9de] border border-[#e6dfd8] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-white border border-[#e6dfd8] flex items-center justify-center text-emerald-600 shrink-0">
+                        <CheckCircle2 size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-[#141413]">
+                          Candidate Tracked under <strong>{jobTitle}</strong>
+                        </p>
+                        <p className="text-[11px] text-[#6c6a64]">
+                          Saved in your Recruiter Workspace with full rubric logs and interview probes.
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#141413] hover:bg-[#2c2b29] text-white text-xs font-mono transition-colors shrink-0"
+                    >
+                      <span>View in Dashboard</span>
+                      <ArrowUpRight size={13} />
+                    </Link>
+                  </div>
+
                   {/* Top Score Banner */}
                   <div className="rounded-2xl bg-aura-secondary p-6 sm:p-8 text-[#141413] border border-[#e6dfd8] shadow-2xl relative overflow-hidden">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
@@ -1040,12 +1365,23 @@ export default function ScreeningPage() {
                           </button>
 
                           <button
-                            onClick={() => setCurrentStep(1)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#cc785c] hover:bg-[#a9583e] text-xs font-semibold text-white shadow-xs transition-all"
+                            onClick={() => {
+                              handleResetNewJob();
+                              setCurrentStep(1);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#cc785c] hover:bg-[#a9583e] text-xs font-semibold text-white shadow-xs transition-all cursor-pointer"
                           >
                             <Briefcase size={13} />
                             <span>Create New Job</span>
                           </button>
+
+                          <Link
+                            href={selectedJobId ? `/dashboard?job_id=${selectedJobId}` : "/dashboard"}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium text-[#faf9f5] border border-white/20 shadow-xs transition-all"
+                          >
+                            <LayoutDashboard size={13} />
+                            <span>View in Dashboard</span>
+                          </Link>
                         </div>
                       </div>
 
@@ -1187,5 +1523,13 @@ export default function ScreeningPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function ScreeningPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#faf9f5] flex items-center justify-center text-xs font-mono">Loading Screening Workspace...</div>}>
+      <ScreeningContent />
+    </Suspense>
   );
 }
