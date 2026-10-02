@@ -34,7 +34,9 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import JobTitleAutocomplete from "@/components/ui/job-title-autocomplete";
+import { JobTitleOption } from "@/lib/job-titles";
 
 // Types
 interface JobData {
@@ -179,10 +181,10 @@ function DashboardContent() {
   };
 
   // Fetch initial summary & jobs
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (silent = false) => {
     if (!user?.id) return;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const url = `${BACKEND_URL}/dashboard/summary?user_id=${encodeURIComponent(user.id)}`;
       const res = await fetch(url, { headers: getHeaders() });
       if (!res.ok) throw new Error("Failed to load dashboard summary");
@@ -212,7 +214,7 @@ function DashboardContent() {
       console.error(err);
       toast.error("Could not load dashboard data right now.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -271,7 +273,7 @@ function DashboardContent() {
         setSelectedCandidate((prev) => (prev ? { ...prev, hiring_status: newStatus } : null));
       }
       toast.success(`Candidate marked as ${newStatus}`);
-      fetchDashboardData();
+      fetchDashboardData(true);
     } catch (err: any) {
       toast.error(err.message || "Failed to update status");
     }
@@ -293,7 +295,7 @@ function DashboardContent() {
         const remaining = jobs.filter((j) => j.id !== jobId);
         setSelectedJob(remaining.length > 0 ? remaining[0] : null);
       }
-      fetchDashboardData();
+      fetchDashboardData(true);
     } catch (err: any) {
       toast.error(err.message || "Error deleting job");
     }
@@ -358,7 +360,7 @@ function DashboardContent() {
       setNewTitle("");
       setNewDescription("");
       setNewCriteria("");
-      fetchDashboardData();
+      fetchDashboardData(true);
     } catch (err: any) {
       toast.error(err.message || "Could not create job");
     } finally {
@@ -494,17 +496,27 @@ function DashboardContent() {
                   <Briefcase size={16} />
                 </div>
               </div>
-              <div className="mt-3">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-serif text-3xl font-medium text-[#141413]">
-                    {summary?.stats.total_jobs ?? jobs.length}
-                  </span>
-                  <span className="text-xs text-[#6c6a64]">
-                    ({summary?.stats.active_jobs ?? jobs.filter(j => j.status === 'active').length} active)
-                  </span>
+              {loading ? (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-baseline gap-2">
+                    <Skeleton className="h-8 w-14 rounded-lg" />
+                    <Skeleton className="h-4 w-16 rounded-md" />
+                  </div>
+                  <Skeleton className="h-3 w-32 rounded-md" />
                 </div>
-                <p className="text-[11px] text-[#5e5d59] mt-1">Open recruitment positions</p>
-              </div>
+              ) : (
+                <div className="mt-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-serif text-3xl font-medium text-[#141413]">
+                      {summary?.stats.total_jobs ?? jobs.length}
+                    </span>
+                    <span className="text-xs text-[#6c6a64]">
+                      ({summary?.stats.active_jobs ?? jobs.filter(j => j.status === 'active').length} active)
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#5e5d59] mt-1">Open recruitment positions</p>
+                </div>
+              )}
             </div>
 
             {/* Card 2: Candidates Tracked */}
@@ -515,17 +527,27 @@ function DashboardContent() {
                   <Users size={16} />
                 </div>
               </div>
-              <div className="mt-3">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-serif text-3xl font-medium text-[#141413]">
-                    {summary?.stats.total_candidates ?? 0}
-                  </span>
-                  <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-mono">
-                    {summary?.stats.shortlisted_candidates ?? 0} Shortlisted
-                  </span>
+              {loading ? (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-baseline gap-2">
+                    <Skeleton className="h-8 w-14 rounded-lg" />
+                    <Skeleton className="h-5 w-24 rounded-full" />
+                  </div>
+                  <Skeleton className="h-3 w-32 rounded-md" />
                 </div>
-                <p className="text-[11px] text-[#5e5d59] mt-1">Total evaluated applicants</p>
-              </div>
+              ) : (
+                <div className="mt-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-serif text-3xl font-medium text-[#141413]">
+                      {summary?.stats.total_candidates ?? 0}
+                    </span>
+                    <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-mono">
+                      {summary?.stats.shortlisted_candidates ?? 0} Shortlisted
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#5e5d59] mt-1">Total evaluated applicants</p>
+                </div>
+              )}
             </div>
 
             {/* Card 3: Quality Index / Avg Score */}
@@ -536,15 +558,25 @@ function DashboardContent() {
                   <Award size={16} />
                 </div>
               </div>
-              <div className="mt-3">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-serif text-3xl font-medium text-[#141413]">
-                    {summary?.stats.average_score ?? 0}%
-                  </span>
-                  <span className="text-xs text-[#6c6a64]">overall avg</span>
+              {loading ? (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-baseline gap-2">
+                    <Skeleton className="h-8 w-16 rounded-lg" />
+                    <Skeleton className="h-4 w-16 rounded-md" />
+                  </div>
+                  <Skeleton className="h-3 w-36 rounded-md" />
                 </div>
-                <p className="text-[11px] text-[#5e5d59] mt-1">Multi-factor rubric benchmark</p>
-              </div>
+              ) : (
+                <div className="mt-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-serif text-3xl font-medium text-[#141413]">
+                      {summary?.stats.average_score ?? 0}%
+                    </span>
+                    <span className="text-xs text-[#6c6a64]">overall avg</span>
+                  </div>
+                  <p className="text-[11px] text-[#5e5d59] mt-1">Multi-factor rubric benchmark</p>
+                </div>
+              )}
             </div>
 
             {/* Card 4: Usage & Quota Meter */}
@@ -555,34 +587,48 @@ function DashboardContent() {
                   <Zap size={16} />
                 </div>
               </div>
-              <div className="mt-3 space-y-2">
-                <div className="flex items-baseline justify-between">
-                  <span className="font-mono text-sm font-bold text-[#141413]">
-                    {summary?.usage.credits_remaining ?? 10}
-                    <span className="text-xs font-normal text-[#6c6a64]"> / {summary?.usage.total_credits ?? 10} left</span>
-                  </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#efe9de] text-[#cc785c] font-semibold uppercase">
-                    {summary?.usage.plan_name ?? "Starter Plan"}
-                  </span>
+              {loading ? (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-baseline justify-between">
+                    <Skeleton className="h-5 w-24 rounded-md" />
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </div>
+                  <Skeleton className="h-1.5 w-full rounded-full" />
+                  <div className="flex items-center justify-between pt-0.5">
+                    <Skeleton className="h-3 w-20 rounded-md" />
+                    <Skeleton className="h-3 w-14 rounded-md" />
+                  </div>
                 </div>
+              ) : (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-baseline justify-between">
+                    <span className="font-mono text-sm font-bold text-[#141413]">
+                      {summary?.usage.credits_remaining ?? 10}
+                      <span className="text-xs font-normal text-[#6c6a64]"> / {summary?.usage.total_credits ?? 10} left</span>
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#efe9de] text-[#cc785c] font-semibold uppercase">
+                      {summary?.usage.plan_name ?? "Starter Plan"}
+                    </span>
+                  </div>
 
-                {/* Progress Bar */}
-                <div className="w-full bg-[#efe9de] rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="bg-[#cc785c] h-1.5 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${summary?.usage.percent_used ?? 0}%`,
-                    }}
-                  />
-                </div>
+                  {/* Progress Bar */}
+                  <div className="w-full bg-[#efe9de] rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-[#cc785c] h-1.5 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${summary?.usage.percent_used ?? 0}%`,
+                      }}
+                    />
+                  </div>
 
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-[#6c6a64]">{summary?.usage.credits_used ?? 0} runs used</span>
-                  <Link href="/profile" className="text-[#cc785c] hover:underline font-medium inline-flex items-center gap-0.5">
-                    Manage <ArrowUpRight size={12} />
-                  </Link>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-[#6c6a64]">{summary?.usage.credits_used ?? 0} runs used</span>
+                    <Link href="/profile" className="text-[#cc785c] hover:underline font-medium inline-flex items-center gap-0.5">
+                      Manage <ArrowUpRight size={12} />
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -592,7 +638,14 @@ function DashboardContent() {
             {/* LEFT COLUMN: Jobs List (4 cols on lg) */}
             <div className="lg:col-span-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-serif text-xl text-[#141413]">Your Jobs ({filteredJobs.length})</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-serif text-xl text-[#141413]">Your Jobs</h2>
+                  {loading ? (
+                    <Skeleton className="h-5 w-8 rounded-full" />
+                  ) : (
+                    <span className="text-xs font-mono text-[#6c6a64]">({filteredJobs.length})</span>
+                  )}
+                </div>
                 <button
                   onClick={() => setIsCreateJobOpen(true)}
                   className="text-xs text-[#cc785c] hover:underline font-medium inline-flex items-center gap-1"
@@ -615,7 +668,35 @@ function DashboardContent() {
 
               {/* Jobs List */}
               <div className="space-y-3 max-h-[620px] overflow-y-auto pr-1">
-                {filteredJobs.length === 0 ? (
+                {loading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="p-4 rounded-2xl border border-[#e6dfd8] bg-white shadow-xs space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <Skeleton className="h-5 w-3/4 rounded-md" />
+                          <Skeleton className="h-4 w-12 rounded-full" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-3 w-16 rounded-md" />
+                          <span className="text-[#e6dfd8]">•</span>
+                          <Skeleton className="h-3 w-20 rounded-md" />
+                        </div>
+                        <div className="flex gap-1.5 pt-0.5">
+                          <Skeleton className="h-5 w-14 rounded-md" />
+                          <Skeleton className="h-5 w-16 rounded-md" />
+                          <Skeleton className="h-5 w-12 rounded-md" />
+                        </div>
+                        <div className="flex items-center justify-between pt-3 border-t border-[#e6dfd8]/60">
+                          <Skeleton className="h-3.5 w-24 rounded-md" />
+                          <Skeleton className="h-3.5 w-16 rounded-md" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredJobs.length === 0 ? (
                   <div className="bg-white border border-dashed border-[#e6dfd8] rounded-2xl p-6 text-center space-y-3">
                     <Briefcase size={28} className="mx-auto text-[#6c6a64]" />
                     <p className="text-xs text-[#5e5d59]">No jobs found matching your criteria.</p>
@@ -633,21 +714,19 @@ function DashboardContent() {
                       <div
                         key={job.id}
                         onClick={() => setSelectedJob(job)}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer relative text-left ${
-                          isSelected
-                            ? "bg-white border-[#cc785c] shadow-sm ring-1 ring-[#cc785c]"
-                            : "bg-white border-[#e6dfd8] hover:border-[#cc785c]/60 shadow-xs"
-                        }`}
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer relative text-left ${isSelected
+                          ? "bg-white border-[#cc785c] shadow-sm ring-1 ring-[#cc785c]"
+                          : "bg-white border-[#e6dfd8] hover:border-[#cc785c]/60 shadow-xs"
+                          }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <h3 className="font-medium text-sm text-[#141413] line-clamp-1">{job.title}</h3>
                           <div className="flex items-center gap-1">
                             <span
-                              className={`text-[10px] font-mono px-2 py-0.5 rounded-full capitalize ${
-                                job.status === "active"
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                  : "bg-gray-100 text-gray-700"
-                              }`}
+                              className={`text-[10px] font-mono px-2 py-0.5 rounded-full capitalize ${job.status === "active"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : "bg-gray-100 text-gray-700"
+                                }`}
                             >
                               {job.status}
                             </span>
@@ -707,7 +786,77 @@ function DashboardContent() {
 
             {/* RIGHT COLUMN: Candidates Tracked in Selected Job (8 cols on lg) */}
             <div className="lg:col-span-8 space-y-4">
-              {selectedJob ? (
+              {loading ? (
+                <div className="space-y-4">
+                  {/* Selected Job Header Card Skeleton */}
+                  <div className="bg-white border border-[#e6dfd8] rounded-2xl p-5 shadow-xs space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-3.5 w-28 rounded-md" />
+                          <span className="text-[#e6dfd8]">•</span>
+                          <Skeleton className="h-3.5 w-20 rounded-md" />
+                          <span className="text-[#e6dfd8]">•</span>
+                          <Skeleton className="h-3.5 w-32 rounded-md" />
+                        </div>
+                        <Skeleton className="h-7 w-64 rounded-md" />
+                        <Skeleton className="h-3.5 w-full max-w-lg rounded-md" />
+                      </div>
+                      <Skeleton className="h-9 w-36 rounded-xl shrink-0" />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-[#e6dfd8]">
+                      <Skeleton className="h-3.5 w-24 rounded-md" />
+                      <Skeleton className="h-6 w-16 rounded-md" />
+                      <Skeleton className="h-6 w-20 rounded-md" />
+                      <Skeleton className="h-6 w-16 rounded-md" />
+                    </div>
+                  </div>
+
+                  {/* Candidates Search & Status Filter Skeleton */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <Skeleton className="h-9 flex-1 rounded-xl" />
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                      {[1, 2, 3, 4, 5].map((idx) => (
+                        <Skeleton key={idx} className="h-8 w-18 rounded-xl shrink-0" />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Candidate List Skeletons */}
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white border border-[#e6dfd8] rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      >
+                        <div className="space-y-2.5 flex-1">
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-5 w-40 rounded-md" />
+                            <Skeleton className="h-4 w-32 rounded-md" />
+                            <Skeleton className="h-4 w-16 rounded-full" />
+                          </div>
+                          <Skeleton className="h-3.5 w-full max-w-md rounded-md" />
+                          <div className="flex items-center gap-2 pt-1">
+                            <Skeleton className="h-3 w-28 rounded-md" />
+                            <span className="text-[#e6dfd8]">•</span>
+                            <Skeleton className="h-3 w-24 rounded-md" />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 shrink-0 sm:border-l sm:border-[#e6dfd8] sm:pl-4">
+                          <div className="flex flex-col items-center gap-1">
+                            <Skeleton className="h-7 w-16 rounded-md" />
+                            <Skeleton className="h-2.5 w-10 rounded-md" />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <Skeleton className="h-8 w-28 rounded-xl" />
+                            <Skeleton className="h-3 w-24 rounded-md" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : selectedJob ? (
                 <>
                   {/* Selected Job Header Card */}
                   <div className="bg-white border border-[#e6dfd8] rounded-2xl p-5 shadow-xs">
@@ -774,11 +923,10 @@ function DashboardContent() {
                         <button
                           key={stage}
                           onClick={() => setCandidateHiringFilter(stage)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-mono capitalize transition-colors whitespace-nowrap cursor-pointer ${
-                            candidateHiringFilter === stage
-                              ? "bg-[#141413] text-white"
-                              : "bg-white border border-[#e6dfd8] text-[#6c6a64] hover:text-[#141413]"
-                          }`}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-mono capitalize transition-colors whitespace-nowrap cursor-pointer ${candidateHiringFilter === stage
+                            ? "bg-[#141413] text-white"
+                            : "bg-white border border-[#e6dfd8] text-[#6c6a64] hover:text-[#141413]"
+                            }`}
                         >
                           {stage}
                         </button>
@@ -789,8 +937,37 @@ function DashboardContent() {
                   {/* Candidates List / Table */}
                   <div className="space-y-3">
                     {loadingCandidates ? (
-                      <div className="bg-white border border-[#e6dfd8] rounded-2xl p-10 text-center text-xs text-[#6c6a64]">
-                        Loading candidates tracked for this job...
+                      <div className="space-y-3">
+                        {[1, 2, 3].map((idx) => (
+                          <div
+                            key={idx}
+                            className="bg-white border border-[#e6dfd8] rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                          >
+                            <div className="space-y-2.5 flex-1">
+                              <div className="flex items-center gap-2">
+                                <Skeleton className="h-5 w-40 rounded-md" />
+                                <Skeleton className="h-4 w-32 rounded-md" />
+                                <Skeleton className="h-4 w-16 rounded-full" />
+                              </div>
+                              <Skeleton className="h-3.5 w-full max-w-md rounded-md" />
+                              <div className="flex items-center gap-2 pt-1">
+                                <Skeleton className="h-3 w-28 rounded-md" />
+                                <span className="text-[#e6dfd8]">•</span>
+                                <Skeleton className="h-3 w-24 rounded-md" />
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4 shrink-0 sm:border-l sm:border-[#e6dfd8] sm:pl-4">
+                              <div className="flex flex-col items-center gap-1">
+                                <Skeleton className="h-7 w-16 rounded-md" />
+                                <Skeleton className="h-2.5 w-10 rounded-md" />
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <Skeleton className="h-8 w-28 rounded-xl" />
+                                <Skeleton className="h-3 w-24 rounded-md" />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     ) : filteredCandidates.length === 0 ? (
                       <div className="bg-white border border-dashed border-[#e6dfd8] rounded-2xl p-10 text-center space-y-3">
@@ -821,13 +998,12 @@ function DashboardContent() {
                                 <span className="text-xs text-[#6c6a64] font-mono">({cand.candidate_email})</span>
                               )}
                               <span
-                                className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold uppercase ${
-                                  cand.match_score >= 80
-                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                    : cand.match_score >= 60
+                                className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold uppercase ${cand.match_score >= 80
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  : cand.match_score >= 60
                                     ? "bg-amber-50 text-amber-700 border border-amber-200"
                                     : "bg-red-50 text-red-700 border border-red-200"
-                                }`}
+                                  }`}
                               >
                                 {cand.fit_rating}
                               </span>
@@ -939,13 +1115,29 @@ function DashboardContent() {
                   <label className="block text-xs font-mono font-medium text-[#141413] mb-1">
                     Job Title <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Senior Full-Stack Engineer"
+                  <JobTitleAutocomplete
                     value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-[#e6dfd8] rounded-xl text-xs text-[#141413] focus:outline-none focus:border-[#cc785c]"
+                    onChange={(val) => setNewTitle(val)}
+                    onSelectOption={(opt: JobTitleOption) => {
+                      setNewTitle(opt.title);
+                      if (opt.suggestedSeniority) {
+                        setNewSeniority(opt.suggestedSeniority === "Mid" ? "Mid-Level" : opt.suggestedSeniority);
+                      }
+                      if (opt.suggestedMinExp !== undefined) {
+                        setNewMinExp(opt.suggestedMinExp);
+                      }
+                      if (opt.suggestedSkills) {
+                        setNewSkills([...opt.suggestedSkills]);
+                      }
+                      if (opt.descriptionTemplate) {
+                        setNewDescription(opt.descriptionTemplate);
+                      }
+                      if (opt.customCriteriaTemplate) {
+                        setNewCriteria(opt.customCriteriaTemplate);
+                      }
+                    }}
+                    required
+                    placeholder="e.g. Full Stack Engineer, AI Engineer, Marketing..."
                   />
                 </div>
 

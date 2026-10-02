@@ -47,9 +47,7 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { name: "Overview", href: "/#overview" },
-    { name: "Evaluation Pipeline", href: "/#pipeline" },
-    { name: "Capabilities", href: "/#capabilities" },
+    { name: "Process", href: "/#pipeline" },
     { name: "Pricing", href: "/#pricing" },
     { name: "Screening Portal", href: "/screening" },
     { name: "Dashboard", href: "/dashboard" },
@@ -206,7 +204,7 @@ export default function Navbar() {
                     href="/register"
                     className="rounded-md bg-[#cc785c] px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-[#a9583e] active:scale-95 shadow-xs"
                   >
-                    Sign Up
+                    Get Started
                   </Link>
                 </>
               )}
@@ -321,7 +319,7 @@ export default function Navbar() {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex justify-center items-center rounded-md bg-[#cc785c] px-4 py-2.5 text-sm font-semibold text-white"
                   >
-                    Sign Up
+                    Get Started
                   </Link>
                 </div>
               )}
